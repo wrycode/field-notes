@@ -6,26 +6,16 @@ import (
 	// "github.com/alecthomas/repr"
 	"github.com/alecthomas/participle/v2"
 	"github.com/alecthomas/participle/v2/lexer"
-	// "encoding/json"
 	"fmt"
-	// "io/ioutil"
+	"io/ioutil"
+	"encoding/json"
 	"image/color"
-	// "strings"
 	// "os"
-	// "encoding/xml"
 	"github.com/beevik/etree"
 	"log"
 	"strconv"
 	"strings"
-	// "reflect"
 )
-// var (
-//	// MVP regex for IPA form lexing
-//	IPAFormLexer = lexer.MustSimple([]lexer.SimpleRule{
-//		{`Token`, `kw|k|ɪ|ŋ|\s`},
-//	})
-//	parser = participle.MustBuild[Document](participle.Lexer(IPAFormLexer))
-// )
 
 type Document struct {
 	Tokens []*Token `@@*`
@@ -38,18 +28,27 @@ type Token struct {
 func (d *Document) PrintTokens() {
 	for _, token := range d.Tokens {
 		fmt.Print(token.Key, " ")
-
 	}
 	fmt.Println()
 }
 
-// func main() {
-//	ini, err := parser.Parse("", os.Stdin)
-//	repr.Println(ini, repr.Indent("  "), repr.OmitEmpty(true))
-//	if err != nil {
-//		panic(err)
-//	}
-// }
+func LoadIPADict(lang string) (map[string]string, error) {
+	type IPAJson map[string][]map[string]string
+	var jsonDict IPAJson
+
+	file := fmt.Sprintf("./ipa_dicts/%s.json", lang)
+
+	jsonFile, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(jsonFile, &jsonDict)
+	if err != nil {
+		return nil, err
+	}
+	return jsonDict[lang][0], nil
+}
 
 func SVG_path_to_canvas(svgpath string) string {
 
@@ -82,7 +81,6 @@ func reverseYAxis(coord string) string {
 	return fmt.Sprintf("%s,%f", points[0], y)
 }
 
-
 func main() {
 
 	// Create new canvas of dimension 100x100 mm
@@ -112,11 +110,10 @@ func main() {
 		}
 	}
 
-
-	for k, v := range formsMap {
-		fmt.Println("IPA: ", k)
-		fmt.Println("Path: ", v)
-	}
+	// for k, v := range formsMap {
+	// 	fmt.Println("IPA: ", k)
+	// 	fmt.Println("Path: ", v)
+	// }
 
 	// build regex for lexer based on user dictionary from the SVG
 	var regexStrBuilder strings.Builder
@@ -142,32 +139,53 @@ func main() {
 		})
 		parser = participle.MustBuild[Document](participle.Lexer(IPAFormLexer)))
 
-	demo_string := `heɪ, haʊz ɪt ˈɡoʊɪŋ? aɪ ʤʌst keɪm frʌm ə ˈkreɪzi deɪ æt wɜrk. ju woʊnt bɪˈliv wɑt ˈhæpənd. ˈaʊər bɑs ˈsʌdənli ˌdɪˈsaɪdɪd ðæt wi nid ə ˈtoʊtəl riˈvæmp fɔr ˈaʊər ˈprɑʤɛkt. naʊ ˈɪzənt ðæt ʤʌst ˈpiʧi? aɪ min, wiv bɪn ˈwɜrkɪŋ ɑn ˈɡɛtɪŋ ðoʊz dræfts dʌn fɔr wiks!`
+	// demo_ipa_string := `heɪ, haʊz ɪt ˈɡoʊɪŋ? aɪ ʤʌst keɪm frʌm ə ˈkreɪzi deɪ æt wɜrk. ju woʊnt bɪˈliv wɑt ˈhæpənd. ˈaʊər bɑs ˈsʌdənli ˌdɪˈsaɪdɪd ðæt wi nid ə ˈtoʊtəl riˈvæmp fɔr ˈaʊər ˈprɑʤɛkt. naʊ ˈɪzənt ðæt ʤʌst ˈpiʧi? aɪ min, wiv bɪn ˈwɜrkɪŋ ɑn ˈɡɛtɪŋ ðoʊz dræfts dʌn fɔr wiks!`
+
+	// demo_string := "Hey, how's it going? I just came from a crazy day at work. You won't believe what happened. Our boss suddenly decided that we need a total revamp for our project. Now isn't that just peachy? I mean, we've been working on getting those drafts done for weeks!"
+	// lang := "en_US"
+
+	// demo_string := `Buenos días, mi nombre es José. Vivo en México y me encanta la comida de mi país. Me gusta pasar tiempo con mi familia y disfrutar de la belleza natural de México. La cultura y las tradiciones de aquí son muy importantes para mí.`
+	// lang := "es_MX"
+
+	demo_string :=`Me olemme maan päällä vieraat ja muukalaiset, niinkuin kaikki meidän isämme; meidän päivämme maan päällä ovat niinkuin varjo, eikä ole mitään toivoa.`
+	lang := "fi"
+
+	ipa, err := LoadIPADict(lang)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	words := strings.Fields(demo_string)
+	for i, word := range words {
+		if replacement, exists := ipa[word]; exists {
+			words[i] = replacement
+		}
+	}
+	demo_ipa_string := strings.Join(words, " ")
+	fmt.Println("demo_ipa_string")
+	fmt.Println(demo_ipa_string)
 
 	// document, err := parser.Parse("", os.Stdin)
-	document, err := parser.ParseString("", demo_string)
-	// repr.Println(document, repr.Indent("  "), repr.OmitEmpty(true))
-	// fmt.Println(document)
+	document, err := parser.ParseString("", demo_ipa_string)
 	document.PrintTokens()
 	if err != nil {
 		panic(err)
 	}
 
 	// Create a triangle path from an SVG path and draw it to the canvas
-	triangle, err := canvas.ParseSVGPath("L0.6 0L0.3 0.6z")
-	if err != nil {
-		panic(err)
-	}
-	ctx.SetFillColor(canvas.Mediumseagreen)
-	ctx.DrawPath(30, 180, triangle)
-	ctx.SetFillColor(Transparent)
+	// triangle, err := canvas.ParseSVGPath("L0.6 0L0.3 0.6z")
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// ctx.SetFillColor(canvas.Mediumseagreen)
+	// ctx.DrawPath(30, 180, triangle)
+	// ctx.SetFillColor(Transparent)
 
 	// point
 	pos := canvas.Point{X: 10, Y: 180}
 	yPos := pos.Y
 	for _, token := range document.Tokens {
 		formPath, err := canvas.ParseSVGPath(formsMap[token.Key])
-
 		if err == nil {
 			ctx.DrawPath(pos.X, pos.Y, formPath)
 			pos.X += formPath.Pos().X
@@ -181,41 +199,8 @@ func main() {
 				pos.Y -= 20
 				yPos = pos.Y
 			}
-
-
-
-
 		}
-
-
 	}
-
-
-	// // Simple sentence: "Welcome to a new way to write"
-	// message := [][]string{
-	//	{"w", "ɛ", "l", "c", "ʌ", "m"},
-	//	{"t"},
-	//	{"ʌ"},
-	//	{"n", "oo"},
-	//	{"w", "eɪ"},
-	//	{"t"},
-	//	{"r", "aɪ", "t"},
-	// }
-
-	// // Render each word
-	// for _, word := range message {
-
-	//	for _, form := range word {
-	//		formPath, err := canvas.ParseSVGPath(formsMap[form])
-	//		if err != nil {
-	//			panic(err)
-	//		}
-	//		ctx.DrawPath(pos.X, pos.Y, formPath)
-	//		pos.X += formPath.Pos().X
-	//		pos.Y += formPath.Pos().Y
-	//	}
-	//	pos.X += 10
-	// }
 
 	// Rasterize the canvas and write to a PNG file with 3.2 dots-per-mm (320x320 px)
 	if err := renderers.Write("rendered_text.png", c, canvas.DPMM(4)); err != nil {
