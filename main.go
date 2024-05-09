@@ -6,6 +6,7 @@ import (
 	// "github.com/alecthomas/repr"
 	"github.com/alecthomas/participle/v2"
 	"github.com/alecthomas/participle/v2/lexer"
+	// "github.com/alecthomas/participle/v2/lexer/stateful"
 	"fmt"
 	"io/ioutil"
 	"encoding/json"
@@ -15,6 +16,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"net/url"
 )
 
 type Document struct {
@@ -103,17 +105,23 @@ func main() {
 	root := doc.SelectElement("svg")
 	for _, path_element := range root.FindElements("//path") {
 		label := path_element.SelectAttrValue("inkscape:label", "unknown")
-		if strings.HasPrefix(label, "IPA:") {
-			standard_IPA_prununciation  := strings.TrimPrefix(label, "IPA: ")
+		values, err := url.ParseQuery(label)
+		if err != nil {
+			panic(err)
+		}
+		if ipa_str := values.Get("IPA"); ipa_str != "" {
+			standard_IPA_prununciation  := values.Get("IPA")
 			SVG_path := path_element.SelectAttr("d").Value
 			formsMap[standard_IPA_prununciation] = SVG_path_to_canvas(SVG_path)
+
 		}
 	}
 
-	// for k, v := range formsMap {
-	// 	fmt.Println("IPA: ", k)
-	// 	fmt.Println("Path: ", v)
-	// }
+
+	for k, v := range formsMap {
+		fmt.Println("IPA: ", k)
+		fmt.Println("Path: ", v)
+	}
 
 	// build regex for lexer based on user dictionary from the SVG
 	var regexStrBuilder strings.Builder
@@ -123,32 +131,56 @@ func main() {
 		if i != 0 {
 			regexStrBuilder.WriteString("|")
 		}
+		// regexStrBuilder.WriteString("("+k+")")
 		regexStrBuilder.WriteString(k)
 		i++
 	}
 
 	regexStrBuilder.WriteString(`|\s|.`)
 
-	// fmt.Println("regex: ")
-	// fmt.Println(regexStrBuilder.String())
+	// regex := "(" + regexStrBuilder.String() + ")"
+	// regex := `kw|aɪ|k|l|eɪ|i|aʊ|v|ð|oʊ|ʊ|j|n|d|p|m|ʌ|w|u|ɛ|ɪ|s|z|t|θ|ɔɪ|r|ks|ʧ|ʤ|ŋ|h|ɡ|f|b|ʃ|æ|ɑ|\s|.`
+	regex := `kw|aɪ|(k?ws)|l|eɪ|i|aʊ|v|ð|oʊ|ʊ|j|n|d|p|m|ʌ|w|u|ɛ|ɪ|s|z|t|θ|ɔɪ|r|ks|ʧ|ʤ|ŋ|h|ɡ|f|b|ʃ|æ|ɑ|\s+a\s+|\s|.`
+	fmt.Println("regex: ")
+	fmt.Println(regex)
 
-	// IPA lexer
-	var (
-		IPAFormLexer = lexer.MustSimple([]lexer.SimpleRule{
-			{`Token`, regexStrBuilder.String()},
-		})
-		parser = participle.MustBuild[Document](participle.Lexer(IPAFormLexer)))
 
-	// demo_ipa_string := `heɪ, haʊz ɪt ˈɡoʊɪŋ? aɪ ʤʌst keɪm frʌm ə ˈkreɪzi deɪ æt wɜrk. ju woʊnt bɪˈliv wɑt ˈhæpənd. ˈaʊər bɑs ˈsʌdənli ˌdɪˈsaɪdɪd ðæt wi nid ə ˈtoʊtəl riˈvæmp fɔr ˈaʊər ˈprɑʤɛkt. naʊ ˈɪzənt ðæt ʤʌst ˈpiʧi? aɪ min, wiv bɪn ˈwɜrkɪŋ ɑn ˈɡɛtɪŋ ðoʊz dræfts dʌn fɔr wiks!`
+	IPAFormLexer := lexer.MustStateful(lexer.Rules{
+		"Root": {
+			{`Token`, regex, nil},
+		},
+	},
+	// lexer.MatchLongest()
+	)
+//	a10Lexer = lexer.MustSimple(
+//		[]lexer.Rule{
+//			{"whitespace", `\s+`, nil},
+//			{"eol", `[\n\r]+`, nil},
+//			{"Punct", `[ \t\n]`, nil},
+//			{"Int", `\d+`, nil},
+//			{"Ident", `[A-Za-z0-9._-][A-Za-z0-9._-]*`, nil},
+//		},
+//		lexer.MatchLongest(),
+//	)
+// )
 
-	// demo_string := "Hey, how's it going? I just came from a crazy day at work. You won't believe what happened. Our boss suddenly decided that we need a total revamp for our project. Now isn't that just peachy? I mean, we've been working on getting those drafts done for weeks!"
-	// lang := "en_US"
+	// IPAFormLexer := lexer.MustSimple([]lexer.SimpleRules{
+	//		{`Token`, regex},
+	//	}, lexer.MatchLongest())
+	// IPAFormLexer.matchLongest()
+	// IPAFormLexer.lngst = true
+	// lexer.MatchLongest()
+	parser := participle.MustBuild[Document](participle.Lexer(IPAFormLexer))
+
+	// demo_string := " hey , how's it going? I just came from a crazy day at work. You won't believe what happened. Our boss suddenly decided that we need a total revamp for our project. Now isn't that just peachy? I mean, we've been working on getting those drafts done for weeks!"
+	demo_string := "question wrecks kick attack attach a catch net"
+	lang := "en_US"
 
 	// demo_string := `Buenos días, mi nombre es José. Vivo en México y me encanta la comida de mi país. Me gusta pasar tiempo con mi familia y disfrutar de la belleza natural de México. La cultura y las tradiciones de aquí son muy importantes para mí.`
 	// lang := "es_MX"
 
-	demo_string :=`Me olemme maan päällä vieraat ja muukalaiset, niinkuin kaikki meidän isämme; meidän päivämme maan päällä ovat niinkuin varjo, eikä ole mitään toivoa.`
-	lang := "fi"
+	// demo_string :=`Me olemme maan päällä vieraat ja muukalaiset, niinkuin kaikki meidän isämme; meidän päivämme maan päällä ovat niinkuin varjo, eikä ole mitään toivoa.`
+	// lang := "fi"
 
 	ipa, err := LoadIPADict(lang)
 	if err != nil {
@@ -158,7 +190,13 @@ func main() {
 	words := strings.Fields(demo_string)
 	for i, word := range words {
 		if replacement, exists := ipa[word]; exists {
-			words[i] = replacement
+			// when there are several possible
+			// pronunciations, right now I don't know what
+			// to do besides select the first option
+			first_option := strings.SplitN(replacement, ",", 2)[0]
+			words[i] = first_option
+			// fmt.Println(word, first_option)
+			// fmt.Println(word,)
 		}
 	}
 	demo_ipa_string := strings.Join(words, " ")
@@ -175,7 +213,7 @@ func main() {
 	// Create a triangle path from an SVG path and draw it to the canvas
 	// triangle, err := canvas.ParseSVGPath("L0.6 0L0.3 0.6z")
 	// if err != nil {
-	// 	panic(err)
+	//	panic(err)
 	// }
 	// ctx.SetFillColor(canvas.Mediumseagreen)
 	// ctx.DrawPath(30, 180, triangle)
