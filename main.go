@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 	"net/url"
+	"html"
 )
 
 type Document struct {
@@ -105,7 +106,8 @@ func main() {
 	root := doc.SelectElement("svg")
 	for _, path_element := range root.FindElements("//path") {
 		label := path_element.SelectAttrValue("inkscape:label", "unknown")
-		values, err := url.ParseQuery(label)
+
+		values, err := url.ParseQuery(html.UnescapeString(label))
 		if err != nil {
 			panic(err)
 		}
