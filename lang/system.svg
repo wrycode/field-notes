@@ -28,7 +28,7 @@
      inkscape:deskcolor="#ffffff"
      inkscape:document-units="mm"
      inkscape:zoom="1.6418421"
-     inkscape:cx="118.76903"
+     inkscape:cx="119.07357"
      inkscape:cy="-209.82529"
      inkscape:window-width="3840"
      inkscape:window-height="2091"
@@ -211,7 +211,7 @@
        style="white-space:pre;shape-inside:url(#rect11-6);display:inline;fill:#ffffff;stroke:#000000;stroke-width:1.00157"><tspan
          x="245.66992"
          y="320.53906"
-         id="tspan1">p</tspan></text><text
+         id="tspan3">p</tspan></text><text
        xml:space="preserve"
        style="font-size:3.175px;fill:#ffffff;stroke:#000000;stroke-width:0.264999"
        x="234.44296"
@@ -562,10 +562,10 @@
        transform="matrix(0.74366211,0,0,0.74366211,327.4118,-510.13068)"><tspan
          x="-165"
          y="80"
-         id="tspan2">Form meaning (Phoneme, syllable, syllable combination, </tspan><tspan
+         id="tspan4">Form meaning (Phoneme, syllable, syllable combination, </tspan><tspan
          x="-165"
          y="83.968753"
-         id="tspan9">prefix/suffix, punctuation or other markup</tspan></text><text
+         id="tspan5">prefix/suffix, punctuation or other markup</tspan></text><text
        xml:space="preserve"
        style="font-size:2.36113px;white-space:pre;inline-size:67.2936;display:inline;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0;stroke-dasharray:none"
        x="42.339478"
@@ -574,13 +574,13 @@
        transform="translate(240.4526,-506.05472)"><tspan
          x="42.339478"
          y="55.417015"
-         id="tspan10">Standardized IPA pronunciation: IMPORTANT: Copy and </tspan><tspan
+         id="tspan6">Standardized IPA pronunciation: IMPORTANT: Copy and </tspan><tspan
          x="42.339478"
          y="58.368427"
-         id="tspan11">paste this value into the ID for the form path in the next </tspan><tspan
+         id="tspan7">paste this value into the ID for the form path in the next </tspan><tspan
          x="42.339478"
          y="61.31984"
-         id="tspan12">column</tspan></text><text
+         id="tspan8">column</tspan></text><text
        xml:space="preserve"
        style="font-size:2.36113px;fill:#000000;stroke:#000000;stroke-width:0"
        x="382.20874"
@@ -1817,7 +1817,7 @@
        style="white-space:pre;shape-inside:url(#rect11-6-6);display:inline;fill:#ffffff;stroke:#000000;stroke-width:1.00157"><tspan
          x="245.66992"
          y="320.53906"
-         id="tspan13">p</tspan></text><text
+         id="tspan9">p</tspan></text><text
        xml:space="preserve"
        style="font-size:3.175px;fill:#ffffff;stroke:#000000;stroke-width:0.264999"
        x="314.64465"
@@ -19806,7 +19806,7 @@
        style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
        d="m 388.48211,-362.94802 h 7.09608"
        id="path109-1"
-       inkscape:label="IPA=n" /><path
+       inkscape:label="IPA=n=not" /><path
        style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
        d="m 407.07357,-333.62345 v -7.09609"
        id="path109-0"
@@ -19882,17 +19882,17 @@
        d="m 380.15606,-421.77537 c 8.43998,-3.77689 14.02133,-1.86139 13.8381,-0.46907"
        id="path107-2-5"
        sodipodi:nodetypes="cc"
-       inkscape:label="IPA=ɡ" /><path
+       inkscape:label="IPA=ɡ=get" /><path
        style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
        d="m 384.4856,-434.95106 c 1.02522,-0.57711 5.24905,-2.73994 6.62444,0.0667"
        id="path108-0"
        sodipodi:nodetypes="cc"
-       inkscape:label="IPA=k" /><path
+       inkscape:label="IPA=k&amp;logo=can" /><path
        style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
        d="m 389.41567,-389.70178 c 0.57711,1.02522 2.73994,5.24905 -0.0667,6.62444"
        id="path108-0-4"
        sodipodi:nodetypes="cc"
-       inkscape:label="IPA=f" /><path
+       inkscape:label="IPA=f=of" /><path
        style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
        d="m 394.96866,-315.6765 c -2.80664,1.37539 -0.64381,5.59922 -0.0667,6.62444"
        id="path108-0-3"
@@ -19902,17 +19902,17 @@
        d="m 386.45132,-411.28525 c 1.37539,2.80664 5.59922,0.64381 6.62444,0.0667"
        id="path108-0-1"
        sodipodi:nodetypes="cc"
-       inkscape:label="IPA=r" /><path
+       inkscape:label="IPA=r=are" /><path
        style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
        d="m 382.97981,-399.45615 c -0.18323,1.39232 5.39812,3.30782 13.8381,-0.46907"
        id="path107-2-5-2"
        sodipodi:nodetypes="cc"
-       inkscape:label="IPA=l" /><path
+       inkscape:label="IPA=l=well" /><path
        style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
        d="m 390.8779,-381.56438 c 3.77689,8.43998 1.86139,14.02133 0.46907,13.8381"
        id="path107-2-5-6"
        sodipodi:nodetypes="cc"
-       inkscape:label="IPA=v" /><path
+       inkscape:label="IPA=v=have" /><path
        style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
        d="m 400.1868,-307.12881 c -1.39232,-0.18323 -3.30782,5.39812 0.46907,13.8381"
        id="path107-2-5-3"
@@ -20033,4 +20033,4 @@
        style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.165;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
        d="m 528.21065,-502.09896 35.26548,25.23135 c 0,0 -57.7919,7.26624 -56.58327,4.7212 1.20863,-2.54504 54.39263,-29.53898 54.39263,-29.53898"
        id="path117"
-       inkscape:label="IPA= platoon" /></g></svg>
+       inkscape:label="IPA= platoon&amp;logo=test" /></g></svg>

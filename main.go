@@ -2,11 +2,11 @@ package main
 
 import (
 	"github.com/tdewolff/canvas"
-	"github.com/tdewolff/canvas/renderers"
+	// "github.com/tdewolff/canvas/renderers"
 	// "github.com/alecthomas/repr"
-	"github.com/alecthomas/participle/v2"
-	"github.com/alecthomas/participle/v2/lexer"
-	// "github.com/alecthomas/participle/v2/lexer/stateful"
+	// "github.com/alecthomas/participle/v2"
+	// "github.com/alecthomas/participle/v2/lexer"
+	"github.com/beevik/prefixtree"
 	"fmt"
 	"io/ioutil"
 	"encoding/json"
@@ -20,21 +20,8 @@ import (
 	"html"
 )
 
-type Document struct {
-	Tokens []*Token `@@*`
-}
-
-type Token struct {
-	Key string `@Token`
-}
-
-func (d *Document) PrintTokens() {
-	for _, token := range d.Tokens {
-		fmt.Print(token.Key, " ")
-	}
-	fmt.Println()
-}
-
+// Load IPA dictionary from ipa_dicts/ dir as a map
+// (from MIT-licensed https://github.com/open-dict-data/ipa-dict project)
 func LoadIPADict(lang string) (map[string]string, error) {
 	type IPAJson map[string][]map[string]string
 	var jsonDict IPAJson
@@ -53,18 +40,16 @@ func LoadIPADict(lang string) (map[string]string, error) {
 	return jsonDict[lang][0], nil
 }
 
+// Convert SVG path description from Inkscape into path description for canvas library
 func SVG_path_to_canvas(svgpath string) string {
-
 	split := strings.Split(svgpath, " ")
 	// remove the first 'move' command to make these paths relative
 	split = split[2:]
 	switch split[0] {
-	case "m", "l", "h", "v", "c", "s", "q", "t", "a", "z":
-		// don't need to do anything
+	case "m", "l", "h", "v", "c", "s", "q", "t", "a", "z":		// command is already present, don't need to do anything
 	default:
 		split = append([]string{"l"}, split...) // need to add the lineto command
 	}
-
 	for i, str := range split {
 		split[i] = reverseYAxis(str)
 	}
@@ -84,22 +69,14 @@ func reverseYAxis(coord string) string {
 	return fmt.Sprintf("%s,%f", points[0], y)
 }
 
-func main() {
+// Load dictionary user-generated subforms and logograms
+func load_system(path string) (*prefixtree.Tree, map[string]Form) {
 
-	// Create new canvas of dimension 100x100 mm
-	c := canvas.New(200, 200)
-
-	// Create a canvas context used to keep drawing state
-	ctx := canvas.NewContext(c)
-	var Transparent = color.RGBA{0x00, 0x00, 0x00, 0x00} // rgba(0, 0, 0, 0)
-	ctx.SetFillColor(Transparent)
-	ctx.SetStrokeColor(canvas.Black)
-	ctx.SetStrokeWidth(0.265)
-
-	formsMap := make(map[string]string)
+	tree := prefixtree.New()
+	logograms := make(map[string]Form)
 
 	doc := etree.NewDocument()
-	if err := doc.ReadFromFile("lang/system.svg"); err != nil {
+	if err := doc.ReadFromFile(path); err != nil {
 		log.Fatalf("Failed to parse document: %v", err)
 	}
 
@@ -112,138 +89,139 @@ func main() {
 			panic(err)
 		}
 		if ipa_str := values.Get("IPA"); ipa_str != "" {
-			standard_IPA_prununciation  := values.Get("IPA")
-			SVG_path := path_element.SelectAttr("d").Value
-			formsMap[standard_IPA_prununciation] = SVG_path_to_canvas(SVG_path)
-
+			canvas_path := SVG_path_to_canvas(path_element.SelectAttr("d").Value)
+			form := Form {
+				Name: ipa_str,
+				Path: canvas_path,
+				}
+			tree.Add(ipa_str, form)
+		}
+		if logo := values.Get("logo"); logo != "" {
+			canvas_path := SVG_path_to_canvas(path_element.SelectAttr("d").Value)
+			form := Form {
+				Name: logo,
+				Path: canvas_path,
+				}
+			logograms[logo] = form
 		}
 	}
+	return tree, logograms
+}
 
-
-	for k, v := range formsMap {
-		fmt.Println("IPA: ", k)
-		fmt.Println("Path: ", v)
+// Return a string, placing a space before and after the punctuation
+func normalizePunctuation(input string) string {
+	punctuations := ".,;!?"
+	for _, punc := range punctuations {
+		// add spaces around punctuation only if they don't exist yet
+		input = strings.ReplaceAll(input, string(punc), " "+string(punc)+" ")
 	}
 
-	// build regex for lexer based on user dictionary from the SVG
-	var regexStrBuilder strings.Builder
+	// Remove extra spaces
+	input = strings.Join(strings.Fields(input), " ")
+	return input
+}
 
-	i := 0
-	for k, _ := range formsMap {
-		if i != 0 {
-			regexStrBuilder.WriteString("|")
-		}
-		// regexStrBuilder.WriteString("("+k+")")
-		regexStrBuilder.WriteString(k)
-		i++
-	}
+// a Form is a 'unit' of handwritten lines - it can be an alphabetical
+// 'subform', a punctuation mark, or a whole word (logogram). The path
+// is a Canvas path. The pen can be picked up from the paper by
+// issueing a MoveTo command (equivalent to SVG move). Some forms,
+// like newlines, have no path value and are handled by the rendering
+// code.
+type Form struct {
+	Name  string
+	Path  string
+}
 
-	regexStrBuilder.WriteString(`|\s|.`)
+func (f Form) String() string {
+	return fmt.Sprintf("%v Path: %v", f.Name, f.Path)
+}
 
-	// regex := "(" + regexStrBuilder.String() + ")"
-	// regex := `kw|aɪ|k|l|eɪ|i|aʊ|v|ð|oʊ|ʊ|j|n|d|p|m|ʌ|w|u|ɛ|ɪ|s|z|t|θ|ɔɪ|r|ks|ʧ|ʤ|ŋ|h|ɡ|f|b|ʃ|æ|ɑ|\s|.`
-	regex := `kw|aɪ|(k?ws)|l|eɪ|i|aʊ|v|ð|oʊ|ʊ|j|n|d|p|m|ʌ|w|u|ɛ|ɪ|s|z|t|θ|ɔɪ|r|ks|ʧ|ʤ|ŋ|h|ɡ|f|b|ʃ|æ|ɑ|\s+a\s+|\s|.`
-	fmt.Println("regex: ")
-	fmt.Println(regex)
+// A document is a sequence of forms
+type Document struct {
+	Forms []Form
+}
 
+// func (d Document) String() string {
+//     var forms []string
+//     for _, form := range d.Forms {
+//         forms = append(forms, form.String())
+//     }
+//     return strings.Join(forms, "\n")
+// }
 
-	IPAFormLexer := lexer.MustStateful(lexer.Rules{
-		"Root": {
-			{`Token`, regex, nil},
-		},
-	},
-	// lexer.MatchLongest()
-	)
-//	a10Lexer = lexer.MustSimple(
-//		[]lexer.Rule{
-//			{"whitespace", `\s+`, nil},
-//			{"eol", `[\n\r]+`, nil},
-//			{"Punct", `[ \t\n]`, nil},
-//			{"Int", `\d+`, nil},
-//			{"Ident", `[A-Za-z0-9._-][A-Za-z0-9._-]*`, nil},
-//		},
-//		lexer.MatchLongest(),
-//	)
-// )
+func main() {
 
-	// IPAFormLexer := lexer.MustSimple([]lexer.SimpleRules{
-	//		{`Token`, regex},
-	//	}, lexer.MatchLongest())
-	// IPAFormLexer.matchLongest()
-	// IPAFormLexer.lngst = true
-	// lexer.MatchLongest()
-	parser := participle.MustBuild[Document](participle.Lexer(IPAFormLexer))
+	// Create new canvas of dimension 100x100 mm
+	c := canvas.New(200, 200)
 
-	// demo_string := " hey , how's it going? I just came from a crazy day at work. You won't believe what happened. Our boss suddenly decided that we need a total revamp for our project. Now isn't that just peachy? I mean, we've been working on getting those drafts done for weeks!"
-	demo_string := "question wrecks kick attack attach a catch net"
+	// Create a canvas context used to keep drawing state
+	ctx := canvas.NewContext(c)
+	var Transparent = color.RGBA{0x00, 0x00, 0x00, 0x00} // Reba(0, 0, 0, 0)
+	ctx.SetFillColor(Transparent)
+	ctx.SetStrokeColor(canvas.Black)
+	ctx.SetStrokeWidth(0.265)
+
+	// user supplied handwriting system definition
+	subformsTree, logo_map := load_system("lang/system.svg")
+
+	fmt.Println(logo_map)
+	fmt.Println(subformsTree)
+
+	input_text := "question wrecks kick attack attach a catch net acclimation, holy day"
 	lang := "en_US"
 
-	// demo_string := `Buenos días, mi nombre es José. Vivo en México y me encanta la comida de mi país. Me gusta pasar tiempo con mi familia y disfrutar de la belleza natural de México. La cultura y las tradiciones de aquí son muy importantes para mí.`
-	// lang := "es_MX"
+	// detach punctuation from words so it doesn't interfere with IPA or form lookup
+	input_text = normalizePunctuation(input_text)
 
-	// demo_string :=`Me olemme maan päällä vieraat ja muukalaiset, niinkuin kaikki meidän isämme; meidän päivämme maan päällä ovat niinkuin varjo, eikä ole mitään toivoa.`
-	// lang := "fi"
-
+	// IPA dictionary
 	ipa, err := LoadIPADict(lang)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	words := strings.Fields(demo_string)
+	words := strings.Fields(input_text)
 	for i, word := range words {
 		if replacement, exists := ipa[word]; exists {
 			// when there are several possible
-			// pronunciations, right now I don't know what
-			// to do besides select the first option
+			// pronunciations, right now we just select
+			// the first option
 			first_option := strings.SplitN(replacement, ",", 2)[0]
+
+			// strip forward slashes and accent characters
+			// we're not using right now
+			first_option = strings.ReplaceAll(first_option, "/", "")
+			first_option = strings.ReplaceAll(first_option, "ˈ", "")
+			first_option = strings.ReplaceAll(first_option, "ˌ", "")
 			words[i] = first_option
-			// fmt.Println(word, first_option)
-			// fmt.Println(word,)
 		}
 	}
 	demo_ipa_string := strings.Join(words, " ")
-	fmt.Println("demo_ipa_string")
+	fmt.Print("demo_ipa_string: ")
 	fmt.Println(demo_ipa_string)
 
-	// document, err := parser.Parse("", os.Stdin)
-	document, err := parser.ParseString("", demo_ipa_string)
-	document.PrintTokens()
-	if err != nil {
-		panic(err)
-	}
+	// point
+	// pos := canvas.Point{X: 10, Y: 180}
+	// yPos := pos.Y
+	// for _, token := range document.Tokens {
+	//	formPath, err := canvas.ParseSVGPath(formsMap[token.Key])
+	//	if err == nil {
+	//		ctx.DrawPath(pos.X, pos.Y, formPath)
+	//		pos.X += formPath.Pos().X
+	//		pos.Y += formPath.Pos().Y
+	//	}
+	//	if token.Key == ` ` {
+	//		pos.Y = yPos
+	//		pos.X += 10
+	//		if pos.X >= 180 {
+	//			pos.X = 20
+	//			pos.Y -= 20
+	//			yPos = pos.Y
+	//		}
+	//	}
+	// }
 
-	// Create a triangle path from an SVG path and draw it to the canvas
-	// triangle, err := canvas.ParseSVGPath("L0.6 0L0.3 0.6z")
-	// if err != nil {
+	// // Rasterize the canvas and write to a PNG file with 3.2 dots-per-mm (320x320 px)
+	// if err := renderers.Write("rendered_text.png", c, canvas.DPMM(4)); err != nil {
 	//	panic(err)
 	// }
-	// ctx.SetFillColor(canvas.Mediumseagreen)
-	// ctx.DrawPath(30, 180, triangle)
-	// ctx.SetFillColor(Transparent)
-
-	// point
-	pos := canvas.Point{X: 10, Y: 180}
-	yPos := pos.Y
-	for _, token := range document.Tokens {
-		formPath, err := canvas.ParseSVGPath(formsMap[token.Key])
-		if err == nil {
-			ctx.DrawPath(pos.X, pos.Y, formPath)
-			pos.X += formPath.Pos().X
-			pos.Y += formPath.Pos().Y
-		}
-		if token.Key == ` ` {
-			pos.Y = yPos
-			pos.X += 10
-			if pos.X >= 180 {
-				pos.X = 20
-				pos.Y -= 20
-				yPos = pos.Y
-			}
-		}
-	}
-
-	// Rasterize the canvas and write to a PNG file with 3.2 dots-per-mm (320x320 px)
-	if err := renderers.Write("rendered_text.png", c, canvas.DPMM(4)); err != nil {
-		panic(err)
-	}
 }
