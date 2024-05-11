@@ -269,7 +269,7 @@ func main() {
 	// user supplied handwriting system definition
 	script_subforms, script_logograms := load_script("lang/system.svg")
 
-	input_text := `here are a few random sentences. I am testing my handwriting system. Let's see how this goes.`
+	input_text := `let's see how well we can do at testing logographs! This is not my forte, but I just want you to know about my system and what you can do with this.`
 
 		// "ringer lock quest get well question wrecks kick attack attach a catch net acclimation, holy day"
 	language_code := "en_US"
