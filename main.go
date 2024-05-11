@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/tdewolff/canvas"
-	// "github.com/tdewolff/canvas/renderers"
+	"github.com/tdewolff/canvas/renderers"
 	// "github.com/alecthomas/repr"
 	// "github.com/alecthomas/participle/v2"
 	// "github.com/alecthomas/participle/v2/lexer"
@@ -144,11 +144,11 @@ type Document struct {
 }
 
 func (d Document) String() string {
-    var forms []string
-    for _, form := range d.Forms {
-	forms = append(forms, form.Name)
-    }
-    return strings.Join(forms, ",")
+	var forms []string
+	for _, form := range d.Forms {
+		forms = append(forms, form.Name)
+	}
+	return strings.Join(forms, ",")
 }
 
 // returns a Document to be rendered
@@ -207,31 +207,31 @@ func Parse(input string, lcode string, subforms *prefixtree.Tree, logos map[stri
 			for current_char < end {
 				seq_end := current_char + 1
 				form_key := string(chars[current_char:seq_end]) // default to one character form
-				val, err := subforms.FindValue(form_key)
-				fmt.Print("one char form search value and error: ")
-				fmt.Println(val, err)
+				val, _ := subforms.FindValue(form_key) // TODO check error?
+				// fmt.Print("one char form search value and error: ")
+				// fmt.Println(val, err)
 
 				for seq_end < end {
 					seq_end+= 1
 					new_form_key := string(chars[current_char:seq_end])
 					new_val, err := subforms.FindValue(new_form_key)
-					fmt.Print("new form search value and error: ")
-					fmt.Println(new_form_key, new_val, err)
+					// fmt.Print("new form search value and error: ")
+					// fmt.Println(new_form_key, new_val, err)
 
 					if err == nil { // new, longer form found
-						fmt.Println("1st")
+						// fmt.Println("1st")
 
 						if new_val.(Form).Name == new_form_key  { // exact match
 							form_key = new_form_key
 							val = new_val
 						}
 					} else if errors.Is(err, prefixtree.ErrPrefixAmbiguous) {
-						fmt.Println("2nd")
+						// fmt.Println("2nd")
 
 					} else {
 						seq_end -= 1 // need
 						// to backtrack one character since no match was found
-						fmt.Println("3rd")
+						// fmt.Println("3rd")
 						break
 					}
 				}
@@ -245,9 +245,9 @@ func Parse(input string, lcode string, subforms *prefixtree.Tree, logos map[stri
 
 		// Add a space between words, which does not have a path value because we will handle rendering
 		doc.Forms = append(doc.Forms, Form {
-				Name: " ",
-					Path: "dummy",
-				})
+			Name: " ",
+				Path: "dummy",
+			})
 	}
 
 	return doc
@@ -269,36 +269,39 @@ func main() {
 	// user supplied handwriting system definition
 	script_subforms, script_logograms := load_script("lang/system.svg")
 
-	input_text := "lock quest get well question wrecks kick attack attach a catch net acclimation, holy day"
+	input_text := `here are a few random sentences. I am testing my handwriting system. Let's see how this goes.`
 
+		// "ringer lock quest get well question wrecks kick attack attach a catch net acclimation, holy day"
 	language_code := "en_US"
 
 	document := Parse(input_text, language_code, script_subforms, script_logograms)
 	fmt.Println(document)
 
-	// point
-	// pos := canvas.Point{X: 10, Y: 180}
-	// yPos := pos.Y
-	// for _, token := range document.Tokens {
-	//	formPath, err := canvas.ParseSVGPath(formsMap[token.Key])
-	//	if err == nil {
-	//		ctx.DrawPath(pos.X, pos.Y, formPath)
-	//		pos.X += formPath.Pos().X
-	//		pos.Y += formPath.Pos().Y
-	//	}
-	//	if token.Key == ` ` {
-	//		pos.Y = yPos
-	//		pos.X += 10
-	//		if pos.X >= 180 {
-	//			pos.X = 20
-	//			pos.Y -= 20
-	//			yPos = pos.Y
-	//		}
-	//	}
-	// }
 
-	// // Rasterize the canvas and write to a PNG file with 3.2 dots-per-mm (320x320 px)
-	// if err := renderers.Write("rendered_text.png", c, canvas.DPMM(4)); err != nil {
-	//	panic(err)
-	// }
+	pos := canvas.Point{X: 10, Y: 180}
+	yPos := pos.Y
+	for _, v := range document.Forms {
+		if v.Name == ` ` {
+			pos.Y = yPos
+			pos.X += 10
+			if pos.X >= 180 {
+				pos.X = 20
+				pos.Y -= 20
+				yPos = pos.Y
+			}
+		} else {
+
+		}
+		formPath, err := canvas.ParseSVGPath(v.Path)
+		if err == nil {
+			ctx.DrawPath(pos.X, pos.Y, formPath)
+			pos.X += formPath.Pos().X
+			pos.Y += formPath.Pos().Y
+		}
+	}
+
+	// Rasterize the canvas and write to a PNG file with 3.2 dots-per-mm (320x320 px)
+	if err := renderers.Write("rendered_text.png", c, canvas.DPMM(4)); err != nil {
+		panic(err)
+	}
 }
