@@ -18,6 +18,8 @@ import (
 	"strings"
 	"net/url"
 	"html"
+	"errors"
+	// "unicode/utf8"
 )
 
 // Load IPA dictionary from ipa_dicts/ dir as a map
@@ -70,7 +72,7 @@ func reverseYAxis(coord string) string {
 }
 
 // Load dictionary user-generated subforms and logograms
-func load_system(path string) (*prefixtree.Tree, map[string]Form) {
+func load_script(path string) (*prefixtree.Tree, map[string]Form) {
 
 	tree := prefixtree.New()
 	logograms := make(map[string]Form)
@@ -92,7 +94,7 @@ func load_system(path string) (*prefixtree.Tree, map[string]Form) {
 			canvas_path := SVG_path_to_canvas(path_element.SelectAttr("d").Value)
 			form := Form {
 				Name: ipa_str,
-				Path: canvas_path,
+					Path: canvas_path,
 				}
 			tree.Add(ipa_str, form)
 		}
@@ -100,7 +102,7 @@ func load_system(path string) (*prefixtree.Tree, map[string]Form) {
 			canvas_path := SVG_path_to_canvas(path_element.SelectAttr("d").Value)
 			form := Form {
 				Name: logo,
-				Path: canvas_path,
+					Path: canvas_path,
 				}
 			logograms[logo] = form
 		}
@@ -141,13 +143,116 @@ type Document struct {
 	Forms []Form
 }
 
-// func (d Document) String() string {
-//     var forms []string
-//     for _, form := range d.Forms {
-//         forms = append(forms, form.String())
-//     }
-//     return strings.Join(forms, "\n")
-// }
+func (d Document) String() string {
+    var forms []string
+    for _, form := range d.Forms {
+	forms = append(forms, form.Name)
+    }
+    return strings.Join(forms, ",")
+}
+
+// returns a Document to be rendered
+func Parse(input string, lcode string, subforms *prefixtree.Tree, logos map[string]Form) Document {
+
+	// detach punctuation from words so it doesn't interfere with IPA or form lookup
+	input = normalizePunctuation(input)
+
+	ipa, err := LoadIPADict(lcode)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// convert string to IPA, skipping logograms which are not defined in IPA
+	words := strings.Fields(input)
+	for i, word := range words {
+		if _, ok := logos[word]; !ok { // skip word if it is in logos map
+			if replacement, exists := ipa[word]; exists {
+				// when there are several possible
+				// pronunciations, right now we just select
+				// the first option
+				first_option := strings.SplitN(replacement, ",", 2)[0]
+
+				// strip forward slashes and accent characters
+				// we're not using right now
+				first_option = strings.ReplaceAll(first_option, "/", "")
+				first_option = strings.ReplaceAll(first_option, "ˈ", "")
+				first_option = strings.ReplaceAll(first_option, "ˌ", "")
+				words[i] = first_option
+			}
+		}
+	}
+
+	ipa_string := strings.Join(words, " ")
+	fmt.Print("ipa_string: ")
+	fmt.Println(ipa_string)
+
+	doc := Document{
+		Forms: make([]Form, 0, len(words)*2),
+	}
+
+	// parse each word into subforms or 1 logogram and add to the document
+	for _, word := range words {
+		if val, ok := logos[word]; ok {
+			doc.Forms = append(doc.Forms, val)
+		} else {		// turn word into subforms
+
+			// easier to index and loop through, we just
+			// have to cast back into string when we
+			// search the subforms prefix tree
+			chars := []rune(word)
+
+			end := len(chars)
+			current_char := 0
+
+			for current_char < end {
+				seq_end := current_char + 1
+				form_key := string(chars[current_char:seq_end]) // default to one character form
+				val, err := subforms.FindValue(form_key)
+				fmt.Print("one char form search value and error: ")
+				fmt.Println(val, err)
+
+				for seq_end < end {
+					seq_end+= 1
+					new_form_key := string(chars[current_char:seq_end])
+					new_val, err := subforms.FindValue(new_form_key)
+					fmt.Print("new form search value and error: ")
+					fmt.Println(new_form_key, new_val, err)
+
+					if err == nil { // new, longer form found
+						fmt.Println("1st")
+
+						if new_val.(Form).Name == new_form_key  { // exact match
+							form_key = new_form_key
+							val = new_val
+						}
+					} else if errors.Is(err, prefixtree.ErrPrefixAmbiguous) {
+						fmt.Println("2nd")
+
+					} else {
+						seq_end -= 1 // need
+						// to backtrack one character since no match was found
+						fmt.Println("3rd")
+						break
+					}
+				}
+				if val != nil {
+					doc.Forms = append(doc.Forms, val.(Form))
+				}
+				current_char = seq_end
+			}
+
+		}
+
+		// Add a space between words, which does not have a path value because we will handle rendering
+		doc.Forms = append(doc.Forms, Form {
+				Name: " ",
+					Path: "dummy",
+				})
+	}
+
+	return doc
+
+}
 
 func main() {
 
@@ -162,42 +267,14 @@ func main() {
 	ctx.SetStrokeWidth(0.265)
 
 	// user supplied handwriting system definition
-	subformsTree, logo_map := load_system("lang/system.svg")
+	script_subforms, script_logograms := load_script("lang/system.svg")
 
-	fmt.Println(logo_map)
-	fmt.Println(subformsTree)
+	input_text := "lock quest get well question wrecks kick attack attach a catch net acclimation, holy day"
 
-	input_text := "question wrecks kick attack attach a catch net acclimation, holy day"
-	lang := "en_US"
+	language_code := "en_US"
 
-	// detach punctuation from words so it doesn't interfere with IPA or form lookup
-	input_text = normalizePunctuation(input_text)
-
-	// IPA dictionary
-	ipa, err := LoadIPADict(lang)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	words := strings.Fields(input_text)
-	for i, word := range words {
-		if replacement, exists := ipa[word]; exists {
-			// when there are several possible
-			// pronunciations, right now we just select
-			// the first option
-			first_option := strings.SplitN(replacement, ",", 2)[0]
-
-			// strip forward slashes and accent characters
-			// we're not using right now
-			first_option = strings.ReplaceAll(first_option, "/", "")
-			first_option = strings.ReplaceAll(first_option, "ˈ", "")
-			first_option = strings.ReplaceAll(first_option, "ˌ", "")
-			words[i] = first_option
-		}
-	}
-	demo_ipa_string := strings.Join(words, " ")
-	fmt.Print("demo_ipa_string: ")
-	fmt.Println(demo_ipa_string)
+	document := Parse(input_text, language_code, script_subforms, script_logograms)
+	fmt.Println(document)
 
 	// point
 	// pos := canvas.Point{X: 10, Y: 180}

@@ -28,7 +28,7 @@
      inkscape:deskcolor="#ffffff"
      inkscape:document-units="mm"
      inkscape:zoom="1.6418421"
-     inkscape:cx="119.07357"
+     inkscape:cx="118.76903"
      inkscape:cy="-209.82529"
      inkscape:window-width="3840"
      inkscape:window-height="2091"
@@ -19806,7 +19806,7 @@
        style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
        d="m 388.48211,-362.94802 h 7.09608"
        id="path109-1"
-       inkscape:label="IPA=n=not" /><path
+       inkscape:label="IPA=n&amp;logo=not" /><path
        style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
        d="m 407.07357,-333.62345 v -7.09609"
        id="path109-0"
@@ -19882,7 +19882,7 @@
        d="m 380.15606,-421.77537 c 8.43998,-3.77689 14.02133,-1.86139 13.8381,-0.46907"
        id="path107-2-5"
        sodipodi:nodetypes="cc"
-       inkscape:label="IPA=ɡ=get" /><path
+       inkscape:label="IPA=ɡ&amp;logo=get" /><path
        style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
        d="m 384.4856,-434.95106 c 1.02522,-0.57711 5.24905,-2.73994 6.62444,0.0667"
        id="path108-0"
@@ -19907,7 +19907,7 @@
        d="m 382.97981,-399.45615 c -0.18323,1.39232 5.39812,3.30782 13.8381,-0.46907"
        id="path107-2-5-2"
        sodipodi:nodetypes="cc"
-       inkscape:label="IPA=l=well" /><path
+       inkscape:label="IPA=l&amp;logo=well" /><path
        style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
        d="m 390.8779,-381.56438 c 3.77689,8.43998 1.86139,14.02133 0.46907,13.8381"
        id="path107-2-5-6"
@@ -20033,4 +20033,9 @@
        style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.165;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
        d="m 528.21065,-502.09896 35.26548,25.23135 c 0,0 -57.7919,7.26624 -56.58327,4.7212 1.20863,-2.54504 54.39263,-29.53898 54.39263,-29.53898"
        id="path117"
-       inkscape:label="IPA= platoon&amp;logo=test" /></g></svg>
+       inkscape:label="IPA= platoon&amp;logo=test" /><path
+       style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
+       d="m 581.70287,-423.47346 c -0.18323,1.39232 5.39812,3.30782 13.8381,-0.46907"
+       id="path107-2-5-2-5"
+       sodipodi:nodetypes="cc"
+       inkscape:label="IPA=ɫ" /></g></svg>
