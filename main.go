@@ -267,11 +267,11 @@ func main() {
 	ctx.SetStrokeWidth(0.265)
 
 	// user supplied handwriting system definition
-	script_subforms, script_logograms := load_script("lang/system.svg")
+	script_subforms, script_logograms := load_script("scripts/demotic.svg")
 
-	input_text := `let's see how well we can do at testing logographs! This is not my forte, but I just want you to know about my system and what you can do with this.`
+	// input_text := `let's see how well we can do at testing logographs! This is not my forte, but I just want you to know about my system and what you can do with this`
+	input_text := `Elephants, with their immense size and gracious movements, are a majestic sight in the wild.`
 
-		// "ringer lock quest get well question wrecks kick attack attach a catch net acclimation, holy day"
 	language_code := "en_US"
 
 	document := Parse(input_text, language_code, script_subforms, script_logograms)
