@@ -43,6 +43,7 @@ func LoadIPADict(lang string) (map[string]string, error) {
 }
 
 // Convert SVG path description from Inkscape into path description for canvas library
+// TODO: May need to improve this function in the future! Have not tested extensively.
 func SVG_path_to_canvas(svgpath string) string {
 	split := strings.Split(svgpath, " ")
 	// remove the first 'move' command to make these paths relative
@@ -123,33 +124,65 @@ func normalizePunctuation(input string) string {
 	return input
 }
 
-// a Form is a 'unit' of handwritten lines - it can be an alphabetical
-// 'subform', a punctuation mark, or a whole word (logogram). The path
-// is a Canvas path. The pen can be picked up from the paper by
-// issueing a MoveTo command (equivalent to SVG move). Some forms,
-// like newlines, have no path value and are handled by the rendering
-// code.
-type Form struct {
+/* a Token is an indivisible 'unit' of a handwritten document in a
+ specific script. The input text is parsed into a sequence of Tokens. A
+ Token can be one of the following 5 things:
+
+   - alphabetical subform, representing a sequence of one or more IPA characters
+   - logogram, representing a full word in the target language
+   - phrase, representing multiple words in a sequence (not yet implemented)
+   - whitespace
+   - punctuation mark or other unknown symbol or character
+
+   Naming: A subform is named the sequence of IPA characters it
+   represents.  A logogram is named the word it represents in the
+   target language or in IPA at the discretion of the user. All other
+   Tokens represent a single character (whitespace or otherwise) and
+   are named that character.
+
+   If the Token is defined in the current Script, Path contains a
+   Canvas path, otherwise it is empty.
+*/
+
+type Token struct {
 	Name  string
 	Path  string
 }
 
-func (f Form) String() string {
-	return fmt.Sprintf("%v Path: %v", f.Name, f.Path)
+func (t Token) String() string {
+	return fmt.Sprintf("%v Path: %v", t.Name, t.Path)
 }
 
-// A document is a sequence of forms
+/* A Metaform is a sequence of one or more Tokens that are drawn
+ connected together. A Metaform can be a single Token, like ","
+ (comma), " " (space), "my" (logogram for the word "my"), or a
+ sequence of Tokens, for instance [r·a·ɪ·t·ɪ·ŋ], representing the word
+ "writing".
+
+   Metaforms also contain extra information for debugging and
+   rendering.
+*/
+type Metaform struct {
+	Forms []Form		// must have at least 1
+	original_word string	// The string of characters represented by the Metaform pre-IPA conversion
+	// Image - might store the rendered path here, not sure yet
+	height float64
+	width float64
+}
+
+// A document is a sequence of Metaforms to be rendered.
 type Document struct {
-	Forms []Form
+	Metaforms []Metaform
 }
 
-func (d Document) String() string {
-	var forms []string
-	for _, form := range d.Forms {
-		forms = append(forms, form.Name)
-	}
-	return strings.Join(forms, ",")
-}
+
+// func (d Document) String() string {
+//	var forms []string
+//	for _, form := range d.Forms {
+//		forms = append(forms, form.Name)
+//	}
+//	return strings.Join(forms, "·")
+// }
 
 // returns a Document to be rendered
 func Parse(input string, lcode string, subforms *prefixtree.Tree, logos map[string]Form) Document {
@@ -270,7 +303,8 @@ func main() {
 	script_subforms, script_logograms := load_script("scripts/demotic.svg")
 
 	// input_text := `let's see how well we can do at testing logographs! This is not my forte, but I just want you to know about my system and what you can do with this`
-	input_text := `Elephants, with their immense size and gracious movements, are a majestic sight in the wild.`
+	// input_text := `Elephants, with their immense size and gracious movements, are a majestic sight in the wild.`
+	input_text := `this is just some writing`
 
 	language_code := "en_US"
 
