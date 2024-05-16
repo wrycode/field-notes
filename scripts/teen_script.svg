@@ -8,7 +8,7 @@
    version="1.1"
    id="svg1"
    inkscape:version="1.3.2 (091e20ef0f, 2023-11-25)"
-   sodipodi:docname="system.svg"
+   sodipodi:docname="teen_script.svg"
    inkscape:export-filename="forms/G.svg"
    inkscape:export-xdpi="96"
    inkscape:export-ydpi="96"
@@ -28,8 +28,8 @@
      inkscape:deskcolor="#ffffff"
      inkscape:document-units="mm"
      inkscape:zoom="1.6418421"
-     inkscape:cx="60.298125"
-     inkscape:cy="889.54961"
+     inkscape:cx="60.907197"
+     inkscape:cy="743.37234"
      inkscape:window-width="3840"
      inkscape:window-height="2091"
      inkscape:window-x="0"
@@ -211,7 +211,7 @@
        style="white-space:pre;shape-inside:url(#rect11-6);display:inline;fill:#ffffff;stroke:#000000;stroke-width:1.00157"><tspan
          x="245.66992"
          y="320.53906"
-         id="tspan3">p</tspan></text><text
+         id="tspan1">p</tspan></text><text
        xml:space="preserve"
        style="font-size:3.175px;fill:#ffffff;stroke:#000000;stroke-width:0.264999"
        x="234.44296"
@@ -562,10 +562,10 @@
        transform="matrix(0.74366211,0,0,0.74366211,327.4118,-510.13068)"><tspan
          x="-165"
          y="80"
-         id="tspan4">Form meaning (Phoneme, syllable, syllable combination, </tspan><tspan
+         id="tspan2">Form meaning (Phoneme, syllable, syllable combination, </tspan><tspan
          x="-165"
          y="83.968753"
-         id="tspan5">prefix/suffix, punctuation or other markup</tspan></text><text
+         id="tspan3">prefix/suffix, punctuation or other markup</tspan></text><text
        xml:space="preserve"
        style="font-size:2.36113px;white-space:pre;inline-size:67.2936;display:inline;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0;stroke-dasharray:none"
        x="42.339478"
@@ -574,13 +574,13 @@
        transform="translate(240.4526,-506.05472)"><tspan
          x="42.339478"
          y="55.417015"
-         id="tspan6">Standardized IPA pronunciation: IMPORTANT: Copy and </tspan><tspan
+         id="tspan4">Standardized IPA pronunciation: IMPORTANT: Copy and </tspan><tspan
          x="42.339478"
          y="58.368427"
-         id="tspan7">paste this value into the ID for the form path in the next </tspan><tspan
+         id="tspan5">paste this value into the ID for the form path in the next </tspan><tspan
          x="42.339478"
          y="61.31984"
-         id="tspan8">column</tspan></text><text
+         id="tspan10">column</tspan></text><text
        xml:space="preserve"
        style="font-size:2.36113px;fill:#000000;stroke:#000000;stroke-width:0"
        x="382.20874"
@@ -1817,7 +1817,7 @@
        style="white-space:pre;shape-inside:url(#rect11-6-6);display:inline;fill:#ffffff;stroke:#000000;stroke-width:1.00157"><tspan
          x="245.66992"
          y="320.53906"
-         id="tspan9">p</tspan></text><text
+         id="tspan11">p</tspan></text><text
        xml:space="preserve"
        style="font-size:3.175px;fill:#ffffff;stroke:#000000;stroke-width:0.264999"
        x="314.64465"
@@ -20048,4 +20048,8 @@
        d="m 555.88345,-40.982757 c -1.46483,0.98437 -1.0289,2.140271 0.40052,1.490316 l 4.02246,-2.66684"
        id="path55-1-7"
        sodipodi:nodetypes="ccc"
-       inkscape:label="IPA=ə" /></g></svg>
+       inkscape:label="IPA=ə" /><path
+       style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.165;stroke-dashoffset:0.113386"
+       d="m 582.84437,-220.18857 9.22523,25.71481 c 0,0 -36.40612,0.44001 -35.28373,-1.59955 1.12239,-2.03955 57.21276,-27.24069 57.21276,-27.24069 l -45.37703,-10.29473 6.74943,59.0024 c 0,0 36.08822,-29.31235 36.56538,-30.42152 0.47715,-1.10916 -19.39469,-17.47473 -29.09204,-15.16072 z"
+       id="path1"
+       inkscape:label="logo=how are you doing" /></g></svg>

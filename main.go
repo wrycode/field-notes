@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/tdewolff/canvas"
-	"github.com/tdewolff/canvas/renderers"
+	// "github.com/tdewolff/canvas/renderers"
 	// "github.com/alecthomas/repr"
 	// "github.com/alecthomas/participle/v2"
 	// "github.com/alecthomas/participle/v2/lexer"
@@ -72,11 +72,31 @@ func reverseYAxis(coord string) string {
 	return fmt.Sprintf("%s,%f", points[0], y)
 }
 
-// Load dictionary user-generated subforms and logograms
-func load_script(path string) (*prefixtree.Tree, map[string]Form) {
+/* A handwriting system definition
 
-	tree := prefixtree.New()
-	logograms := make(map[string]Form)
+   SubForms are Tokens representing a sequence of one or more IPA
+   characters. They are stored in a prefix tree so the parser can
+   easily select the largest subform possible while scanning the IPA
+   text.
+
+   Logos are Tokens representing a full word (Logogram) or more than
+   one word (phrase). They are also stored in a prefix tree.
+   
+
+   
+*/
+  
+type Script struct {
+	SubForms *prefixtree.Tree
+	Logos *prefixtree.Tree
+}
+
+// Load dictionary user-generated subforms and logograms
+func load_script(path string) *Script {
+
+	subforms := prefixtree.New()
+	logograms := prefixtree.New()
+	// logograms := make(map[string]Form)
 
 	doc := etree.NewDocument()
 	if err := doc.ReadFromFile(path); err != nil {
@@ -93,22 +113,28 @@ func load_script(path string) (*prefixtree.Tree, map[string]Form) {
 		}
 		if ipa_str := values.Get("IPA"); ipa_str != "" {
 			canvas_path := SVG_path_to_canvas(path_element.SelectAttr("d").Value)
-			form := Form {
+			token := Token {
 				Name: ipa_str,
 					Path: canvas_path,
 				}
-			tree.Add(ipa_str, form)
+			subforms.Add(ipa_str, token)
 		}
-		if logo := values.Get("logo"); logo != "" {
+		if logo_str := values.Get("logo"); logo_str != "" {
 			canvas_path := SVG_path_to_canvas(path_element.SelectAttr("d").Value)
-			form := Form {
-				Name: logo,
+			token := Token {
+				Name: logo_str,
 					Path: canvas_path,
 				}
-			logograms[logo] = form
+			logograms.Add(logo_str, token)
 		}
 	}
-	return tree, logograms
+
+	return &Script{
+		SubForms: subforms,
+		Logos: logograms,
+	}
+	
+	// return tree, logograms
 }
 
 // Return a string, placing a space before and after the punctuation
@@ -126,17 +152,16 @@ func normalizePunctuation(input string) string {
 
 /* a Token is an indivisible 'unit' of a handwritten document in a
  specific script. The input text is parsed into a sequence of Tokens. A
- Token can be one of the following 5 things:
+ Token can be one of the following 4 things:
 
    - alphabetical subform, representing a sequence of one or more IPA characters
    - logogram, representing a full word in the target language
    - phrase, representing multiple words in a sequence (not yet implemented)
-   - whitespace
-   - punctuation mark or other unknown symbol or character
+   - whitespace, punctuation mark or other unknown symbol or character
 
    Naming: A subform is named the sequence of IPA characters it
    represents.  A logogram is named the word it represents in the
-   target language or in IPA at the discretion of the user. All other
+   target language (or in IPA at the discretion of the user). All other
    Tokens represent a single character (whitespace or otherwise) and
    are named that character.
 
@@ -156,16 +181,17 @@ func (t Token) String() string {
 /* A Metaform is a sequence of one or more Tokens that are drawn
  connected together. A Metaform can be a single Token, like ","
  (comma), " " (space), "my" (logogram for the word "my"), or a
- sequence of Tokens, for instance [r·a·ɪ·t·ɪ·ŋ], representing the word
+ sequence of Tokens, for instance [r·aɪ·t·ɪŋ], representing the word
  "writing".
 
    Metaforms also contain extra information for debugging and
    rendering.
 */
 type Metaform struct {
-	Forms []Form		// must have at least 1
-	original_word string	// The string of characters represented by the Metaform pre-IPA conversion
+	Tokens []Token		// must have at least 1
+	original_word string	// The string of characters represented by the Metaform pre-IPA conversion.
 	// Image - might store the rendered path here, not sure yet
+	// Path
 	height float64
 	width float64
 }
@@ -175,117 +201,171 @@ type Document struct {
 	Metaforms []Metaform
 }
 
+func (d Document) String() string {
+	var metaforms []string
+	for _, metaform := range d.Metaforms {
+		metaforms = append(metaforms, metaform.original_word)
+	}
+	return strings.Join(metaforms, "·")
+}
 
-// func (d Document) String() string {
-//	var forms []string
-//	for _, form := range d.Forms {
-//		forms = append(forms, form.Name)
-//	}
-//	return strings.Join(forms, "·")
-// }
+// Subparse
 
 // returns a Document to be rendered
-func Parse(input string, lcode string, subforms *prefixtree.Tree, logos map[string]Form) Document {
-
-	// detach punctuation from words so it doesn't interfere with IPA or form lookup
+func Parse(input string, lcode string, script *Script) Document {
+	// detach punctuation from words
 	input = normalizePunctuation(input)
 
-	ipa, err := LoadIPADict(lcode)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// ipa, err := LoadIPADict(lcode)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// fmt.Println("Ipa len"ipa)
 
-	// convert string to IPA, skipping logograms which are not defined in IPA
 	words := strings.Fields(input)
-	for i, word := range words {
-		if _, ok := logos[word]; !ok { // skip word if it is in logos map
-			if replacement, exists := ipa[word]; exists {
-				// when there are several possible
-				// pronunciations, right now we just select
-				// the first option
-				first_option := strings.SplitN(replacement, ",", 2)[0]
-
-				// strip forward slashes and accent characters
-				// we're not using right now
-				first_option = strings.ReplaceAll(first_option, "/", "")
-				first_option = strings.ReplaceAll(first_option, "ˈ", "")
-				first_option = strings.ReplaceAll(first_option, "ˌ", "")
-				words[i] = first_option
-			}
-		}
-	}
-
-	ipa_string := strings.Join(words, " ")
-	fmt.Print("ipa_string: ")
-	fmt.Println(ipa_string)
 
 	doc := Document{
-		Forms: make([]Form, 0, len(words)*2),
+		Metaforms: make([]Metaform, 0, len(words)*2),
 	}
 
-	// parse each word into subforms or 1 logogram and add to the document
-	for _, word := range words {
-		if val, ok := logos[word]; ok {
-			doc.Forms = append(doc.Forms, val)
-		} else {		// turn word into subforms
-
-			// easier to index and loop through, we just
-			// have to cast back into string when we
-			// search the subforms prefix tree
-			chars := []rune(word)
-
-			end := len(chars)
-			current_char := 0
-
-			for current_char < end {
-				seq_end := current_char + 1
-				form_key := string(chars[current_char:seq_end]) // default to one character form
-				val, _ := subforms.FindValue(form_key) // TODO check error?
-				// fmt.Print("one char form search value and error: ")
-				// fmt.Println(val, err)
-
-				for seq_end < end {
-					seq_end+= 1
-					new_form_key := string(chars[current_char:seq_end])
-					new_val, err := subforms.FindValue(new_form_key)
-					// fmt.Print("new form search value and error: ")
-					// fmt.Println(new_form_key, new_val, err)
-
-					if err == nil { // new, longer form found
-						// fmt.Println("1st")
-
-						if new_val.(Form).Name == new_form_key  { // exact match
-							form_key = new_form_key
-							val = new_val
-						}
-					} else if errors.Is(err, prefixtree.ErrPrefixAmbiguous) {
-						// fmt.Println("2nd")
-
-					} else {
-						seq_end -= 1 // need
-						// to backtrack one character since no match was found
-						// fmt.Println("3rd")
-						break
-					}
-				}
-				if val != nil {
-					doc.Forms = append(doc.Forms, val.(Form))
-				}
-				current_char = seq_end
+	fmt.Println("logograms: ")
+	// script.Logos.Output()
+	// Loop through words, converting to logograms or IPA and appending to the document
+	for i := 0; i < len(words); {
+		word := words[i]
+		
+		// First check if the word is found in the logogram prefix tree
+		val, err := script.Logos.FindValue(word)
+		var matched_phrase_or_logo string // empty unless we find a matching sequence of one or more words in the script.Logos prefix tree
+		
+		if err == nil {
+			logo := val.(Token)
+			next_word_pos := i + 1 // Only used to update i later if we find a matching phrase or logo
+			
+			if logo.Name == word  { // exact match
+				matched_phrase_or_logo = word
 			}
-
+			
+			// Keep checking words until the sequence of
+			// words isn't found in the prefix tree
+			for j := i + 2; j < len(words); j++ {
+				next_phrase := strings.Join(words[i:j], " ")
+				// fmt.Println("next_phrase: ", next_phrase)
+				next_val, err := script.Logos.FindValue(next_phrase)
+				
+				if err == nil {
+					next_logo := next_val.(Token)
+					// fmt.Println("1st")
+					if next_logo.Name == next_phrase { // exact match
+						logo = next_logo
+						matched_phrase_or_logo = next_phrase
+						next_word_pos = j
+					}
+				} else if errors.Is(err, prefixtree.ErrPrefixAmbiguous) {
+					// fmt.Println("2nd")
+					// continue searching for a phrase but don't save the current one
+					// because we don't have a new match
+				} else { // No match for the current word at j; time to save the logogram
+					// fmt.Println("3rd")
+					break
+				}
+			}
+			
+			if matched_phrase_or_logo != "" {
+				// fmt.Println
+				i = next_word_pos
+				metaform := Metaform{
+					Tokens:        []Token{logo},
+					original_word: matched_phrase_or_logo,
+					// height:        10.0,
+					// width:         15.0,
+				}
+				doc.Metaforms = append(doc.Metaforms, metaform)
+				continue
+			}
 		}
-
-		// Add a space between words, which does not have a path value because we will handle rendering
-		doc.Forms = append(doc.Forms, Form {
-			Name: " ",
-				Path: "dummy",
-			})
+		i++
 	}
-
 	return doc
-
 }
+	// for _, word := range words {
+	// 	logo, err := script.Logos.FindValue(word)
+	// 	if err == nil { // new, longer form found
+	// 		// fmt.Println("1st")
+			
+	// 		if new_val.(Form).Name == new_form_key  { // exact match
+	// 			form_key = new_form_key
+	// 			val = new_val
+	// 		}
+	// 	} else if errors.Is(err, prefixtree.ErrPrefixAmbiguous) {
+	// 		// fmt.Println("2nd")
+	// 		fmt.Println("2nd")			
+			
+	// 	} else {
+	// 		seq_end -= 1 // need
+	// 		// to backtrack one character since no match was found
+	// 		// fmt.Println("3rd")
+	// 		break
+	// 	}
+		
+		
+	// 	if val, ok := logos[word]; ok {
+	// 		doc.Forms = append(doc.Forms, val)
+	// 	} else {		// turn word into subforms
+
+	// 		// easier to index and loop through, we just
+	// 		// have to cast back into string when we
+	// 		// search the subforms prefix tree
+	// 		chars := []rune(word)
+
+	// 		end := len(chars)
+	// 		current_char := 0
+
+	// 		for current_char < end {
+	// 			seq_end := current_char + 1
+	// 			form_key := string(chars[current_char:seq_end]) // default to one character form
+	// 			val, _ := subforms.FindValue(form_key) // TODO check error?
+	// 			// fmt.Print("one char form search value and error: ")
+	// 			// fmt.Println(val, err)
+
+	// 			for seq_end < end {
+	// 				seq_end+= 1
+	// 				new_form_key := string(chars[current_char:seq_end])
+	// 				new_val, err := subforms.FindValue(new_form_key)
+	// 				// fmt.Print("new form search value and error: ")
+	// 				// fmt.Println(new_form_key, new_val, err)
+
+	// 				if err == nil { // new, longer form found
+	// 					// fmt.Println("1st")
+
+	// 					if new_val.(Form).Name == new_form_key  { // exact match
+	// 						form_key = new_form_key
+	// 						val = new_val
+	// 					}
+	// 				} else if errors.Is(err, prefixtree.ErrPrefixAmbiguous) {
+	// 					// fmt.Println("2nd")
+
+	// 				} else {
+	// 					seq_end -= 1 // need
+	// 					// to backtrack one character since no match was found
+	// 					// fmt.Println("3rd")
+	// 					break
+	// 				}
+	// 			}
+	// 			if val != nil {
+	// 				doc.Forms = append(doc.Forms, val.(Form))
+	// 			}
+	// 			current_char = seq_end
+	// 		}
+
+	// 	}
+
+	// 	// Add a space between words, which does not have a path value because we will handle rendering
+	// 	doc.Forms = append(doc.Forms, Form {
+	// 		Name: " ",
+	// 			Path: "dummy",
+	// 		})
+	// }
 
 func main() {
 
@@ -300,42 +380,45 @@ func main() {
 	ctx.SetStrokeWidth(0.265)
 
 	// user supplied handwriting system definition
-	script_subforms, script_logograms := load_script("scripts/demotic.svg")
+	script := load_script("scripts/teen_script.svg")
+	fmt.Println(script)
+	// script.SubForms.Output()
+	// script.Logos.Output()
 
-	// input_text := `let's see how well we can do at testing logographs! This is not my forte, but I just want you to know about my system and what you can do with this`
+	input_text := `. how are you doing? how now brown cow? let's see how well we can do at testing logographs! This is not my forte, but I just want you to know about my system and what you can do with this`
+	fmt.Println("input_text: ", input_text)
 	// input_text := `Elephants, with their immense size and gracious movements, are a majestic sight in the wild.`
-	input_text := `this is just some writing`
+	// input_text := `this is just some writing`
 
 	language_code := "en_US"
 
-	document := Parse(input_text, language_code, script_subforms, script_logograms)
+	document := Parse(input_text, language_code, script)
 	fmt.Println(document)
 
+	// pos := canvas.Point{X: 10, Y: 180}
+	// yPos := pos.Y
+	// for _, v := range document.Forms {
+	// 	if v.Name == ` ` {
+	// 		pos.Y = yPos
+	// 		pos.X += 10
+	// 		if pos.X >= 180 {
+	// 			pos.X = 20
+	// 			pos.Y -= 20
+	// 			yPos = pos.Y
+	// 		}
+	// 	} else {
 
-	pos := canvas.Point{X: 10, Y: 180}
-	yPos := pos.Y
-	for _, v := range document.Forms {
-		if v.Name == ` ` {
-			pos.Y = yPos
-			pos.X += 10
-			if pos.X >= 180 {
-				pos.X = 20
-				pos.Y -= 20
-				yPos = pos.Y
-			}
-		} else {
+	// 	}
+	// 	formPath, err := canvas.ParseSVGPath(v.Path)
+	// 	if err == nil {
+	// 		ctx.DrawPath(pos.X, pos.Y, formPath)
+	// 		pos.X += formPath.Pos().X
+	// 		pos.Y += formPath.Pos().Y
+	// 	}
+	// }
 
-		}
-		formPath, err := canvas.ParseSVGPath(v.Path)
-		if err == nil {
-			ctx.DrawPath(pos.X, pos.Y, formPath)
-			pos.X += formPath.Pos().X
-			pos.Y += formPath.Pos().Y
-		}
-	}
-
-	// Rasterize the canvas and write to a PNG file with 3.2 dots-per-mm (320x320 px)
-	if err := renderers.Write("rendered_text.png", c, canvas.DPMM(4)); err != nil {
-		panic(err)
-	}
+	// // Rasterize the canvas and write to a PNG file with 3.2 dots-per-mm (320x320 px)
+	// if err := renderers.Write("rendered_text.png", c, canvas.DPMM(4)); err != nil {
+	// 	panic(err)
+	// }
 }
