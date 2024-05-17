@@ -82,8 +82,6 @@ func reverseYAxis(coord string) string {
    Logos are Tokens representing a full word (Logogram) or more than
    one word (phrase). They are also stored in a prefix tree.
    
-
-   
 */
   
 type Script struct {
@@ -96,7 +94,6 @@ func load_script(path string) *Script {
 
 	subforms := prefixtree.New()
 	logograms := prefixtree.New()
-	// logograms := make(map[string]Form)
 
 	doc := etree.NewDocument()
 	if err := doc.ReadFromFile(path); err != nil {
@@ -190,37 +187,37 @@ func (t Token) String() string {
 type Metaform struct {
 	Tokens []Token		// must have at least 1
 	original_word string	// The string of characters represented by the Metaform pre-IPA conversion.
+	// ipa_word		// IPA string
+	contains_out_of_script_characters bool
 	// Image - might store the rendered path here, not sure yet
 	// Path
 	height float64
 	width float64
 }
 
+func (m Metaform) String() string {
+	var tokens []string
+	for _, token := range m.Tokens {
+		tokens = append(tokens, token.Name)
+	}
+	return strings.Join(tokens, "·")
+}
+
+
 // A document is a sequence of Metaforms to be rendered.
 type Document struct {
 	Metaforms []Metaform
 }
-
-func (d Document) String() string {
-	var metaforms []string
-	for _, metaform := range d.Metaforms {
-		metaforms = append(metaforms, metaform.original_word)
-	}
-	return strings.Join(metaforms, "·")
-}
-
-// Subparse
 
 // returns a Document to be rendered
 func Parse(input string, lcode string, script *Script) Document {
 	// detach punctuation from words
 	input = normalizePunctuation(input)
 
-	// ipa, err := LoadIPADict(lcode)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// fmt.Println("Ipa len"ipa)
+	ipa, err := LoadIPADict(lcode)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	words := strings.Fields(input)
 
@@ -228,7 +225,7 @@ func Parse(input string, lcode string, script *Script) Document {
 		Metaforms: make([]Metaform, 0, len(words)*2),
 	}
 
-	fmt.Println("logograms: ")
+	// fmt.Println("logograms: ")
 	// script.Logos.Output()
 	// Loop through words, converting to logograms or IPA and appending to the document
 	for i := 0; i < len(words); {
@@ -284,88 +281,84 @@ func Parse(input string, lcode string, script *Script) Document {
 				continue
 			}
 		}
+
+		// If we got this far in the loop, then we can assume
+		// no phrase or logogram was found. Convert the word
+		// to IPA:
+		if replacement, exists := ipa[word]; exists {
+			// when there are several possible
+			// pronunciations, right now we just select
+			// the first option
+			first_option := strings.SplitN(replacement, ",", 2)[0]
+			
+			// strip forward slashes and accent characters
+			// we're not using right now
+			first_option = strings.ReplaceAll(first_option, "/", "")
+			first_option = strings.ReplaceAll(first_option, "ˈ", "")
+			first_option = strings.ReplaceAll(first_option, "ˌ", "")
+			words[i] = first_option
+		}
+
+		// Now convert the IPA characters into subform tokens
+		
+		// easier to index and loop through, we just
+		// have to cast back into string when we
+		// search the subforms prefix tree
+		chars := []rune(words[i])
+
+		end := len(chars)
+		current_char := 0
+
+		metaform := Metaform{
+			Tokens:        []Token{},
+			original_word: word,
+			// contains_out_of_script_characters: false
+			// height:        10.0,
+			// width:         15.0,
+		}
+					
+		for current_char < end {
+			seq_end := current_char + 1
+			form_key := string(chars[current_char:seq_end]) // default to one character form
+			val, err := script.SubForms.FindValue(form_key)
+
+			if errors.Is(err, prefixtree.ErrPrefixNotFound) {
+				// character is not defined in the script, so we'll just store it as a pathless Token and move on
+				token := Token {
+					Name: form_key,
+					}
+				metaform.Tokens = append(metaform.Tokens, token)
+				metaform.contains_out_of_script_characters = true
+			}
+
+			for seq_end < end {
+				seq_end+= 1
+				new_form_key := string(chars[current_char:seq_end])
+				new_val, err := script.SubForms.FindValue(new_form_key)
+
+				if err == nil { // new, longer form found
+					if new_val.(Token).Name == new_form_key  { // exact match
+							form_key = new_form_key
+							val = new_val
+						}
+					} else if errors.Is(err, prefixtree.ErrPrefixAmbiguous) {
+					} else {
+						seq_end -= 1 // need
+						// to backtrack one character since no match was found
+						break
+					}
+				}
+			if val != nil {
+				metaform.Tokens = append(metaform.Tokens, val.(Token))
+			}
+			current_char = seq_end
+		}
+		doc.Metaforms = append(doc.Metaforms, metaform)
 		i++
 	}
+	
 	return doc
 }
-	// for _, word := range words {
-	// 	logo, err := script.Logos.FindValue(word)
-	// 	if err == nil { // new, longer form found
-	// 		// fmt.Println("1st")
-			
-	// 		if new_val.(Form).Name == new_form_key  { // exact match
-	// 			form_key = new_form_key
-	// 			val = new_val
-	// 		}
-	// 	} else if errors.Is(err, prefixtree.ErrPrefixAmbiguous) {
-	// 		// fmt.Println("2nd")
-	// 		fmt.Println("2nd")			
-			
-	// 	} else {
-	// 		seq_end -= 1 // need
-	// 		// to backtrack one character since no match was found
-	// 		// fmt.Println("3rd")
-	// 		break
-	// 	}
-		
-		
-	// 	if val, ok := logos[word]; ok {
-	// 		doc.Forms = append(doc.Forms, val)
-	// 	} else {		// turn word into subforms
-
-	// 		// easier to index and loop through, we just
-	// 		// have to cast back into string when we
-	// 		// search the subforms prefix tree
-	// 		chars := []rune(word)
-
-	// 		end := len(chars)
-	// 		current_char := 0
-
-	// 		for current_char < end {
-	// 			seq_end := current_char + 1
-	// 			form_key := string(chars[current_char:seq_end]) // default to one character form
-	// 			val, _ := subforms.FindValue(form_key) // TODO check error?
-	// 			// fmt.Print("one char form search value and error: ")
-	// 			// fmt.Println(val, err)
-
-	// 			for seq_end < end {
-	// 				seq_end+= 1
-	// 				new_form_key := string(chars[current_char:seq_end])
-	// 				new_val, err := subforms.FindValue(new_form_key)
-	// 				// fmt.Print("new form search value and error: ")
-	// 				// fmt.Println(new_form_key, new_val, err)
-
-	// 				if err == nil { // new, longer form found
-	// 					// fmt.Println("1st")
-
-	// 					if new_val.(Form).Name == new_form_key  { // exact match
-	// 						form_key = new_form_key
-	// 						val = new_val
-	// 					}
-	// 				} else if errors.Is(err, prefixtree.ErrPrefixAmbiguous) {
-	// 					// fmt.Println("2nd")
-
-	// 				} else {
-	// 					seq_end -= 1 // need
-	// 					// to backtrack one character since no match was found
-	// 					// fmt.Println("3rd")
-	// 					break
-	// 				}
-	// 			}
-	// 			if val != nil {
-	// 				doc.Forms = append(doc.Forms, val.(Form))
-	// 			}
-	// 			current_char = seq_end
-	// 		}
-
-	// 	}
-
-	// 	// Add a space between words, which does not have a path value because we will handle rendering
-	// 	doc.Forms = append(doc.Forms, Form {
-	// 		Name: " ",
-	// 			Path: "dummy",
-	// 		})
-	// }
 
 func main() {
 
@@ -385,7 +378,7 @@ func main() {
 	// script.SubForms.Output()
 	// script.Logos.Output()
 
-	input_text := `. how are you doing? how now brown cow? let's see how well we can do at testing logographs! This is not my forte, but I just want you to know about my system and what you can do with this`
+	input_text := `when are you doing? how now brown cow? let's see how well we can do at testing logographs! This is not my forte, but I just want you to know about my system and what you can do with this`
 	fmt.Println("input_text: ", input_text)
 	// input_text := `Elephants, with their immense size and gracious movements, are a majestic sight in the wild.`
 	// input_text := `this is just some writing`
