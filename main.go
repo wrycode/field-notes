@@ -228,6 +228,8 @@ func Parse(input string, lcode string, script *Script) Document {
 	// detach punctuation from words
 	input = normalizePunctuation(input)
 
+	input = strings.ToLower(input)
+
 	ipa, err := LoadIPADict(lcode)
 	if err != nil {
 		log.Fatal(err)
@@ -392,7 +394,7 @@ func main() {
 	// script.SubForms.Output()
 	// script.Logos.Output()
 
-	input_text := `trick treat when are you doing? how now brown cow? let's see how well we can do at testing logographs! This is not my forte, but I just want you to know about my system and what you can do with this`
+	input_text := `How are you doing? Let's see how well we can do at testing logographs! This is not my forte, but I just want you to know about my system and what you can do with this`
 	fmt.Println("input_text: ", input_text)
 	// input_text := `Elephants, with their immense size and gracious movements, are a majestic sight in the wild.`
 	// input_text := `this is just some writing`
