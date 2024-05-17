@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/tdewolff/canvas"
+	// "github.com/tdewolff/canvas"
 	// "github.com/tdewolff/canvas/renderers"
 	// "github.com/alecthomas/repr"
 	// "github.com/alecthomas/participle/v2"
@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"encoding/json"
-	"image/color"
+	// "image/color"
 	// "os"
 	"github.com/beevik/etree"
 	"log"
@@ -19,6 +19,7 @@ import (
 	"net/url"
 	"html"
 	"errors"
+	"syscall/js"
 	// "unicode/utf8"
 )
 
@@ -89,8 +90,8 @@ type Script struct {
 	Logos *prefixtree.Tree
 }
 
-// Load dictionary user-generated subforms and logograms
-func load_script(path string) *Script {
+// Load dictionary of user-generated subforms and logograms
+func load_script(svg_str string) *Script {
 
 	// TODO: need to validate the script to alert the user if an
 	// IPA sequence (or word or phrase) is mapped to multiple
@@ -102,7 +103,7 @@ func load_script(path string) *Script {
 	logograms := prefixtree.New()
 
 	doc := etree.NewDocument()
-	if err := doc.ReadFromFile(path); err != nil {
+	if err := doc.ReadFromString(svg_str); err != nil {
 		log.Fatalf("Failed to parse document: %v", err)
 	}
 
@@ -144,8 +145,6 @@ func load_script(path string) *Script {
 		SubForms: subforms,
 		Logos: logograms,
 	}
-
-	// return tree, logograms
 }
 
 // Return a string, placing a space before and after the punctuation
@@ -376,33 +375,86 @@ func Parse(input string, lcode string, script *Script) Document {
 	return doc
 }
 
+func renderWrapper() js.Func {
+        renderFunc := js.FuncOf(func(this js.Value, args []js.Value) any {
+                if len(args) != 1 {
+                        return "Invalid no of arguments passed"
+                }
+                inputSVG := args[0].String()
+                fmt.Println("len(input)", len(inputSVG))
+                status, err := render(inputSVG)
+                if err != nil {
+                        fmt.Printf("unable to render using script %s\n", err)
+                        return err.Error()
+                }
+                return status
+        })
+        return renderFunc
+}
+
+func render(/* input string, language_code string, */ script_svg_str string) (string, error) {
+	// user supplied handwriting system definition
+	script := load_script(script_svg_str)
+	input_text := `How are you doing? Let's see how well we can do at testing logographs! This is not my forte, but I just want you to know about my system and what you can do with this`
+	fmt.Println("input_text: ", input_text)
+	language_code := "en_US"
+	document := Parse(input_text, language_code, script)
+	fmt.Println("document: ", document)
+
+	return "success", nil
+}
+
 func main() {
 
 	// Create new canvas of dimension 100x100 mm
-	c := canvas.New(200, 200)
+	// c := canvas.New(200, 200)
 
-	// Create a canvas context used to keep drawing state
-	ctx := canvas.NewContext(c)
-	var Transparent = color.RGBA{0x00, 0x00, 0x00, 0x00} // Reba(0, 0, 0, 0)
-	ctx.SetFillColor(Transparent)
-	ctx.SetStrokeColor(canvas.Black)
-	ctx.SetStrokeWidth(0.265)
+	// // Create a canvas context used to keep drawing state
+	// ctx := canvas.NewContext(c)
+	// var Transparent = color.RGBA{0x00, 0x00, 0x00, 0x00} // Reba(0, 0, 0, 0)
+	// ctx.SetFillColor(Transparent)
+	// ctx.SetStrokeColor(canvas.Black)
+	// ctx.SetStrokeWidth(0.265)
 
+	fmt.Println("Go web assembly")
+	js.Global().Set("renderSVG", renderWrapper())
+
+	
 	// user supplied handwriting system definition
-	script := load_script("scripts/teen_script.svg")
-	fmt.Println(script)
+	// script := load_script("scripts/teen_script.svg")
+	// fmt.Println(script)
 	// script.SubForms.Output()
 	// script.Logos.Output()
 
-	input_text := `How are you doing? Let's see how well we can do at testing logographs! This is not my forte, but I just want you to know about my system and what you can do with this`
-	fmt.Println("input_text: ", input_text)
+	// input_text := `How are you doing? Let's see how well we can do at testing logographs! This is not my forte, but I just want you to know about my system and what you can do with this`
+	// fmt.Println("input_text: ", input_text)
 	// input_text := `Elephants, with their immense size and gracious movements, are a majestic sight in the wild.`
 	// input_text := `this is just some writing`
 
-	language_code := "en_US"
+	// language_code := "en_US"
 
-	document := Parse(input_text, language_code, script)
-	fmt.Println("document: ", document)
+	// document := Parse(input_text, language_code, script)
+	// fmt.Println("document: ", document)
+
+	// js.Global().Set("processFile", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+	// 	// parse SVG file content
+	// 	data := args[0].String()
+	// 	println(data) // check what it prints
+	// 	return nil
+	// }))
+
+	// c := make(chan struct{}, 0)
+
+	// println("WASM Go Initialized")
+	// // register functions
+	// registerCallbacks()
+	// <-c
+	// fmt.Println("Go Web Assembly")
+
+        // js.Global().Set("printSVG", jsonWrapper())
+
+        // <-make(chan struct{})
+	
 
 	// pos := canvas.Point{X: 10, Y: 180}
 	// yPos := pos.Y
