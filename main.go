@@ -8,10 +8,12 @@ import (
 	// "github.com/alecthomas/participle/v2/lexer"
 	"github.com/beevik/prefixtree"
 	"fmt"
-	"io/ioutil"
+	// "io/ioutil"
 	"encoding/json"
 	// "image/color"
 	// "os"
+	// "bytes"
+	// "io"
 	"github.com/beevik/etree"
 	"log"
 	"strconv"
@@ -20,18 +22,20 @@ import (
 	"html"
 	"errors"
 	"syscall/js"
+	"embed"
 	// "unicode/utf8"
 )
 
-// Load IPA dictionary from ipa_dicts/ dir as a map
-// (from MIT-licensed https://github.com/open-dict-data/ipa-dict project)
+//go:embed ipa_dicts/*
+var ipaDicts embed.FS
+
 func LoadIPADict(lang string) (map[string]string, error) {
 	type IPAJson map[string][]map[string]string
 	var jsonDict IPAJson
 
-	file := fmt.Sprintf("./ipa_dicts/%s.json", lang)
+	file := fmt.Sprintf("ipa_dicts/%s.json", lang)
 
-	jsonFile, err := ioutil.ReadFile(file)
+	jsonFile, err := ipaDicts.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
@@ -42,6 +46,26 @@ func LoadIPADict(lang string) (map[string]string, error) {
 	}
 	return jsonDict[lang][0], nil
 }
+
+// // Load IPA dictionary from ipa_dicts/ dir as a map
+// // (from MIT-licensed https://github.com/open-dict-data/ipa-dict project)
+// func LoadIPADict(lang string) (map[string]string, error) {
+// 	type IPAJson map[string][]map[string]string
+// 	var jsonDict IPAJson
+
+// 	file := fmt.Sprintf("./ipa_dicts/%s.json", lang)
+
+// 	jsonFile, err := ioutil.ReadFile(file)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	err = json.Unmarshal(jsonFile, &jsonDict)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return jsonDict[lang][0], nil
+// }
 
 // Convert SVG path description from Inkscape into path description for canvas library
 // TODO: May need to improve this function in the future! Have not tested extensively.
@@ -90,9 +114,12 @@ type Script struct {
 	Logos *prefixtree.Tree
 }
 
-// Load dictionary of user-generated subforms and logograms
-func load_script(svg_str string) *Script {
+//go:embed scripts/*
+var scripts embed.FS
 
+// Load dictionary of user-generated subforms and logograms
+func load_script(custom_script bool, script string) *Script {
+	
 	// TODO: need to validate the script to alert the user if an
 	// IPA sequence (or word or phrase) is mapped to multiple
 	// tokens. The other way around is fine, however: one token
@@ -103,8 +130,15 @@ func load_script(svg_str string) *Script {
 	logograms := prefixtree.New()
 
 	doc := etree.NewDocument()
-	if err := doc.ReadFromString(svg_str); err != nil {
-		log.Fatalf("Failed to parse document: %v", err)
+	if custom_script {
+		if err := doc.ReadFromString(script); err != nil {
+			log.Fatalf("Failed to parse document: %v", err)
+		}
+	} else {
+		file := fmt.Sprintf("scripts/%s", script)
+		if err := doc.ReadFromFile(file); err != nil {
+			log.Fatalf("Failed to parse document: %v", err)
+		}
 	}
 
 	root := doc.SelectElement("svg")
@@ -377,32 +411,69 @@ func Parse(input string, lcode string, script *Script) Document {
 
 func renderWrapper() js.Func {
         renderFunc := js.FuncOf(func(this js.Value, args []js.Value) any {
-                if len(args) != 1 {
+                if len(args) != 3 {
                         return "Invalid no of arguments passed"
                 }
-                inputSVG := args[0].String()
-                fmt.Println("len(input)", len(inputSVG))
-                status, err := render(inputSVG)
+		renderDoc := js.Global().Get("document")
+		if !renderDoc.Truthy() {
+			return "Unable to get document object"
+		}
+		renderOutputTextArea := renderDoc.Call("getElementById", "render_text_output")
+		if !renderOutputTextArea.Truthy() {
+			return "Unable to get output text area"
+		}
+		custom_script := args[0].Bool()
+                script := args[0].String()
+		lcode := args[1].String()
+                // fmt.Println("len(input)", len(inputSVG))
+                status, err := render(custom_script, script, lcode)
                 if err != nil {
                         fmt.Printf("unable to render using script %s\n", err)
                         return err.Error()
                 }
+		renderOutputTextArea.Set("value", status)
                 return status
         })
         return renderFunc
 }
-
-func render(/* input string, language_code string, */ script_svg_str string) (string, error) {
+// script is the SVG itself if the user uploaded a custom script,
+// otherwise it's the name of one of the embedded scripts
+func render(custom_script bool, script string, lcode string) (string, error) {
 	// user supplied handwriting system definition
-	script := load_script(script_svg_str)
+	s := load_script(custom_script, script)
 	input_text := `How are you doing? Let's see how well we can do at testing logographs! This is not my forte, but I just want you to know about my system and what you can do with this`
 	fmt.Println("input_text: ", input_text)
-	language_code := "en_US"
-	document := Parse(input_text, language_code, script)
+	// language_code := "en_US"
+	document := Parse(input_text, lcode, s)
 	fmt.Println("document: ", document)
-
 	return "success", nil
 }
+
+// func render(script_svg_str string) (string, error) {
+// 	// Create a pipe to capture stdout
+// 	r, w, _ := os.Pipe()
+// 	stdout := os.Stdout // keep backup of the real stdout
+// 	os.Stdout = w       // redirect stdout to the write end of the pipe
+
+// 	// user supplied handwriting system definition
+// 	script := load_script(script_svg_str)
+// 	input_text := `How are you doing? Let's see how well we can do at testing logographs! This is not my forte, but I just want you to know about my system and what you can do with this.`
+// 	fmt.Println("input_text: ", input_text)
+// 	language_code := "en_US"
+// 	document := Parse(input_text, language_code, script)
+// 	fmt.Println("document: ", document)
+
+// 	// Now restore stdout and close the write end of the pipe 
+// 	os.Stdout = stdout
+// 	w.Close()
+
+// 	// Read from the stdout pipe into a buffer
+// 	var buf bytes.Buffer
+// 	io.Copy(&buf, r)
+	 
+// 	// return the stdout content
+// 	return buf.String(), nil
+// }
 
 func main() {
 
@@ -418,7 +489,7 @@ func main() {
 
 	fmt.Println("Go web assembly")
 	js.Global().Set("renderSVG", renderWrapper())
-
+	  <-make(chan struct{})
 	
 	// user supplied handwriting system definition
 	// script := load_script("scripts/teen_script.svg")

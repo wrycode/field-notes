@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <script src="wasm_exec.js"></script>
+    <script>
+      const go = new Go();
+      WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
+	  go.run(result.instance);
+      });
+    </script>
+
+    <link rel="stylesheet" type="text/css" href="style.css">
+  </head>
+  <body>
+    <details class="toc" open>
+      <summary>Options
+      </summary>
+      <div class="options">
+	<ol>
+	  <li>
+	    <label for="lang_select">Language of the input text (used for IPA conversion): </label>
+	    <select name="lang_select" id="lang_select"> select language</select>
+	  </li>
+	  <li>
+	    <label for="builtin_script_select">Choose a built-in script: </label>
+	    <select id="builtin_script_select">
+	      <option value="teen_script.svg">Teen Script</option>
+	      <option value="demotic.svg">Demotic</option>
+	    </select>
+	  </li>
+	  
+	  <li>
+	    <label for="custom_script_select">OR upload your own script file (See here for guide): </label>
+	    <input type="file" id="custom_script_select" accept=".svg">
+	  </li>
+	  <li>
+	    <label for="renderButton">Click to render output: </label>
+	    <button id="renderButton">Render</button>
+	  </li>
+	</ol>
+    </details>
+    <div id="container">
+      <div id="input">
+	<h1>Input</h1>
+	<textarea id="text_input" name="text_input"></textarea>
+	<textarea id="render_text_output" name="render_text_output"rows="4" readonly></textarea>
+      </div>
+      <div id="output">
+	<h1>Output</h1>
+      </div>
+    </div>
+    </div>
+  </body>
+  <script src="/script_tool.js"></script>
+</html>
