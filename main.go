@@ -81,9 +81,9 @@ func reverseYAxis(coord string) string {
 
    Logos are Tokens representing a full word (Logogram) or more than
    one word (phrase). They are also stored in a prefix tree.
-   
+
 */
-  
+
 type Script struct {
 	SubForms *prefixtree.Tree
 	Logos *prefixtree.Tree
@@ -91,6 +91,12 @@ type Script struct {
 
 // Load dictionary user-generated subforms and logograms
 func load_script(path string) *Script {
+
+	// TODO: need to validate the script to alert the user if an
+	// IPA sequence (or word or phrase) is mapped to multiple
+	// tokens. The other way around is fine, however: one token
+	// can represent multiple IPA sequences (e.g. 'w' and 'hw' are
+	// simplified to one symbol) or words or phrases.
 
 	subforms := prefixtree.New()
 	logograms := prefixtree.New()
@@ -108,21 +114,29 @@ func load_script(path string) *Script {
 		if err != nil {
 			panic(err)
 		}
-		if ipa_str := values.Get("IPA"); ipa_str != "" {
+
+		if ipa_field_val := values.Get("IPA"); ipa_field_val != "" {
 			canvas_path := SVG_path_to_canvas(path_element.SelectAttr("d").Value)
-			token := Token {
-				Name: ipa_str,
-					Path: canvas_path,
-				}
-			subforms.Add(ipa_str, token)
+			for _, ipa_sequence := range strings.Split(ipa_field_val, ",") {
+				token := Token {
+					Name: ipa_sequence,
+						Path: canvas_path,
+					}
+				subforms.Add(ipa_sequence, token)
+			}
+
+
 		}
-		if logo_str := values.Get("logo"); logo_str != "" {
+
+		if logo_field_val := values.Get("logo"); logo_field_val != "" {
 			canvas_path := SVG_path_to_canvas(path_element.SelectAttr("d").Value)
-			token := Token {
-				Name: logo_str,
-					Path: canvas_path,
-				}
-			logograms.Add(logo_str, token)
+			for _, logo_str := range strings.Split(logo_field_val, ",") {
+				token := Token {
+					Name: logo_str,
+						Path: canvas_path,
+					}
+				logograms.Add(logo_str, token)
+			}
 		}
 	}
 
@@ -130,7 +144,7 @@ func load_script(path string) *Script {
 		SubForms: subforms,
 		Logos: logograms,
 	}
-	
+
 	// return tree, logograms
 }
 
@@ -230,26 +244,26 @@ func Parse(input string, lcode string, script *Script) Document {
 	// Loop through words, converting to logograms or IPA and appending to the document
 	for i := 0; i < len(words); {
 		word := words[i]
-		
+
 		// First check if the word is found in the logogram prefix tree
 		val, err := script.Logos.FindValue(word)
 		var matched_phrase_or_logo string // empty unless we find a matching sequence of one or more words in the script.Logos prefix tree
-		
+
 		if err == nil {
 			logo := val.(Token)
 			next_word_pos := i + 1 // Only used to update i later if we find a matching phrase or logo
-			
+
 			if logo.Name == word  { // exact match
 				matched_phrase_or_logo = word
 			}
-			
+
 			// Keep checking words until the sequence of
 			// words isn't found in the prefix tree
 			for j := i + 2; j < len(words); j++ {
 				next_phrase := strings.Join(words[i:j], " ")
 				// fmt.Println("next_phrase: ", next_phrase)
 				next_val, err := script.Logos.FindValue(next_phrase)
-				
+
 				if err == nil {
 					next_logo := next_val.(Token)
 					// fmt.Println("1st")
@@ -267,7 +281,7 @@ func Parse(input string, lcode string, script *Script) Document {
 					break
 				}
 			}
-			
+
 			if matched_phrase_or_logo != "" {
 				// fmt.Println
 				i = next_word_pos
@@ -290,7 +304,7 @@ func Parse(input string, lcode string, script *Script) Document {
 			// pronunciations, right now we just select
 			// the first option
 			first_option := strings.SplitN(replacement, ",", 2)[0]
-			
+
 			// strip forward slashes and accent characters
 			// we're not using right now
 			first_option = strings.ReplaceAll(first_option, "/", "")
@@ -300,7 +314,7 @@ func Parse(input string, lcode string, script *Script) Document {
 		}
 
 		// Now convert the IPA characters into subform tokens
-		
+
 		// easier to index and loop through, we just
 		// have to cast back into string when we
 		// search the subforms prefix tree
@@ -316,7 +330,7 @@ func Parse(input string, lcode string, script *Script) Document {
 			// height:        10.0,
 			// width:         15.0,
 		}
-					
+
 		for current_char < end {
 			seq_end := current_char + 1
 			form_key := string(chars[current_char:seq_end]) // default to one character form
@@ -356,7 +370,7 @@ func Parse(input string, lcode string, script *Script) Document {
 		doc.Metaforms = append(doc.Metaforms, metaform)
 		i++
 	}
-	
+
 	return doc
 }
 
@@ -378,7 +392,7 @@ func main() {
 	// script.SubForms.Output()
 	// script.Logos.Output()
 
-	input_text := `when are you doing? how now brown cow? let's see how well we can do at testing logographs! This is not my forte, but I just want you to know about my system and what you can do with this`
+	input_text := `trick treat when are you doing? how now brown cow? let's see how well we can do at testing logographs! This is not my forte, but I just want you to know about my system and what you can do with this`
 	fmt.Println("input_text: ", input_text)
 	// input_text := `Elephants, with their immense size and gracious movements, are a majestic sight in the wild.`
 	// input_text := `this is just some writing`
@@ -386,32 +400,32 @@ func main() {
 	language_code := "en_US"
 
 	document := Parse(input_text, language_code, script)
-	fmt.Println(document)
+	fmt.Println("document: ", document)
 
 	// pos := canvas.Point{X: 10, Y: 180}
 	// yPos := pos.Y
 	// for _, v := range document.Forms {
-	// 	if v.Name == ` ` {
-	// 		pos.Y = yPos
-	// 		pos.X += 10
-	// 		if pos.X >= 180 {
-	// 			pos.X = 20
-	// 			pos.Y -= 20
-	// 			yPos = pos.Y
-	// 		}
-	// 	} else {
+	//	if v.Name == ` ` {
+	//		pos.Y = yPos
+	//		pos.X += 10
+	//		if pos.X >= 180 {
+	//			pos.X = 20
+	//			pos.Y -= 20
+	//			yPos = pos.Y
+	//		}
+	//	} else {
 
-	// 	}
-	// 	formPath, err := canvas.ParseSVGPath(v.Path)
-	// 	if err == nil {
-	// 		ctx.DrawPath(pos.X, pos.Y, formPath)
-	// 		pos.X += formPath.Pos().X
-	// 		pos.Y += formPath.Pos().Y
-	// 	}
+	//	}
+	//	formPath, err := canvas.ParseSVGPath(v.Path)
+	//	if err == nil {
+	//		ctx.DrawPath(pos.X, pos.Y, formPath)
+	//		pos.X += formPath.Pos().X
+	//		pos.Y += formPath.Pos().Y
+	//	}
 	// }
 
 	// // Rasterize the canvas and write to a PNG file with 3.2 dots-per-mm (320x320 px)
 	// if err := renderers.Write("rendered_text.png", c, canvas.DPMM(4)); err != nil {
-	// 	panic(err)
+	//	panic(err)
 	// }
 }

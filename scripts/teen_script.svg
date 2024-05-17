@@ -27,9 +27,9 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#ffffff"
      inkscape:document-units="mm"
-     inkscape:zoom="1.6418421"
-     inkscape:cx="60.907197"
-     inkscape:cy="743.37234"
+     inkscape:zoom="0.41046053"
+     inkscape:cx="-713.83235"
+     inkscape:cy="517.71117"
      inkscape:window-width="3840"
      inkscape:window-height="2091"
      inkscape:window-x="0"
@@ -501,7 +501,7 @@
        d="m 400.37272,-32.064867 c -1.46483,0.98437 -1.0289,2.140271 0.40052,1.490316 l 4.02246,-2.66684"
        id="path55-1"
        sodipodi:nodetypes="ccc"
-       inkscape:label="IPA=ʌ&amp;logo=a" /><g
+       inkscape:label="IPA=ʌ,ə&amp;logo=a" /><g
        id="g45"
        transform="translate(-29.693685,-1.8830288)"><path
          style="fill:#ffffff;fill-opacity:0;stroke:#000000;stroke-width:0.264999"
@@ -19818,7 +19818,7 @@
        style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
        d="m 414.53425,-287.46007 5.01769,-5.0177"
        id="path109-8"
-       inkscape:label="IPA=h&amp;logo=he" /><path
+       inkscape:label="IPA=h,hw&amp;logo=he" /><path
        style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
        d="m 402.05626,-272.53573 9.70741,-9.7074"
        id="path110-2"
@@ -19902,12 +19902,12 @@
        d="m 386.45132,-411.28525 c 1.37539,2.80664 5.59922,0.64381 6.62444,0.0667"
        id="path108-0-1"
        sodipodi:nodetypes="cc"
-       inkscape:label="IPA=ɹ&amp;logo=are" /><path
+       inkscape:label="IPA=ɹ,ɝ&amp;logo=are" /><path
        style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
        d="m 382.97981,-399.45615 c -0.18323,1.39232 5.39812,3.30782 13.8381,-0.46907"
        id="path107-2-5-2"
        sodipodi:nodetypes="cc"
-       inkscape:label="IPA=l&amp;logo=well" /><path
+       inkscape:label="IPA=l,ɫ&amp;logo=well" /><path
        style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
        d="m 390.8779,-381.56438 c 3.77689,8.43998 1.86139,14.02133 0.46907,13.8381"
        id="path107-2-5-6"
@@ -20029,27 +20029,4 @@
          id="tspan117"
          style="stroke-width:0.165;stroke:#000000;stroke-opacity:1;fill:#000000;fill-opacity:1"
          x="239.29085"
-         y="14.9165">ih (bit)</tspan></text><path
-       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.165;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
-       d="m 528.21065,-502.09896 35.26548,25.23135 c 0,0 -57.7919,7.26624 -56.58327,4.7212 1.20863,-2.54504 54.39263,-29.53898 54.39263,-29.53898"
-       id="path117"
-       inkscape:label="IPA= platoon&amp;logo=test" /><path
-       style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
-       d="m 581.70287,-423.47346 c -0.18323,1.39232 5.39812,3.30782 13.8381,-0.46907"
-       id="path107-2-5-2-5"
-       sodipodi:nodetypes="cc"
-       inkscape:label="IPA=ɫ" /><path
-       style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
-       d="m 594.64967,-414.74465 c 1.37539,2.80664 5.59922,0.64381 6.62444,0.0667"
-       id="path108-0-1-2"
-       sodipodi:nodetypes="cc"
-       inkscape:label="IPA=ɝ" /><path
-       style="fill:#ffffff;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none"
-       d="m 555.88345,-40.982757 c -1.46483,0.98437 -1.0289,2.140271 0.40052,1.490316 l 4.02246,-2.66684"
-       id="path55-1-7"
-       sodipodi:nodetypes="ccc"
-       inkscape:label="IPA=ə" /><path
-       style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.165;stroke-dashoffset:0.113386"
-       d="m 582.84437,-220.18857 9.22523,25.71481 c 0,0 -36.40612,0.44001 -35.28373,-1.59955 1.12239,-2.03955 57.21276,-27.24069 57.21276,-27.24069 l -45.37703,-10.29473 6.74943,59.0024 c 0,0 36.08822,-29.31235 36.56538,-30.42152 0.47715,-1.10916 -19.39469,-17.47473 -29.09204,-15.16072 z"
-       id="path1"
-       inkscape:label="logo=how are you doing" /></g></svg>
+         y="14.9165">ih (bit)</tspan></text></g></svg>
