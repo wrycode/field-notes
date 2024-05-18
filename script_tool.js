@@ -24,10 +24,22 @@ document.getElementById("custom_script_select").addEventListener("change", funct
 
 
 document.getElementById('renderButton').addEventListener('click', function() {
-    var custom_script_file = document.getElementById('custom_script_file');
-    var file = custom_script_file.files[0];
-    var output = document.getElementById('render_text_output');
-    output.textContent = `Language code: ${lcode}, Built-in Script: ${builtin_script_str}, Custom Script: ${custom_script_str}`;
+    var debug_output = document.getElementById('render_text_output');
+
+    
+    if (builtin_script_str) {
+	result = renderSVG(false, builtin_script_str, lcode)
+            if (typeof result === "string") {
+                debug_output.textContent = result;
+            } else if (result instanceof Node) {
+                debug_output.appendChild(result);
+            }
+    }
+    
+    // var custom_script_file = document.getElementById('custom_script_select').files[0];
+    // var file = custom_script_file.files[0];
+    
+    // debug_output.textContent = `Language code: ${lcode}, Built-in Script: ${builtin_script_str}, Custom Script: ${custom_script_str}`;
     
     // if (file) {
     //     var reader = new FileReader();

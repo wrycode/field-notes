@@ -50,21 +50,21 @@ func LoadIPADict(lang string) (map[string]string, error) {
 // // Load IPA dictionary from ipa_dicts/ dir as a map
 // // (from MIT-licensed https://github.com/open-dict-data/ipa-dict project)
 // func LoadIPADict(lang string) (map[string]string, error) {
-// 	type IPAJson map[string][]map[string]string
-// 	var jsonDict IPAJson
+//	type IPAJson map[string][]map[string]string
+//	var jsonDict IPAJson
 
-// 	file := fmt.Sprintf("./ipa_dicts/%s.json", lang)
+//	file := fmt.Sprintf("./ipa_dicts/%s.json", lang)
 
-// 	jsonFile, err := ioutil.ReadFile(file)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+//	jsonFile, err := ioutil.ReadFile(file)
+//	if err != nil {
+//		return nil, err
+//	}
 
-// 	err = json.Unmarshal(jsonFile, &jsonDict)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return jsonDict[lang][0], nil
+//	err = json.Unmarshal(jsonFile, &jsonDict)
+//	if err != nil {
+//		return nil, err
+//	}
+//	return jsonDict[lang][0], nil
 // }
 
 // Convert SVG path description from Inkscape into path description for canvas library
@@ -119,7 +119,7 @@ var scripts embed.FS
 
 // Load dictionary of user-generated subforms and logograms
 func load_script(custom_script bool, script string) *Script {
-	
+
 	// TODO: need to validate the script to alert the user if an
 	// IPA sequence (or word or phrase) is mapped to multiple
 	// tokens. The other way around is fine, however: one token
@@ -136,7 +136,12 @@ func load_script(custom_script bool, script string) *Script {
 		}
 	} else {
 		file := fmt.Sprintf("scripts/%s", script)
-		if err := doc.ReadFromFile(file); err != nil {
+		script_file, err := scripts.ReadFile(file)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if err := doc.ReadFromString(string(script_file)); err != nil {
 			log.Fatalf("Failed to parse document: %v", err)
 		}
 	}
@@ -410,10 +415,10 @@ func Parse(input string, lcode string, script *Script) Document {
 }
 
 func renderWrapper() js.Func {
-        renderFunc := js.FuncOf(func(this js.Value, args []js.Value) any {
-                if len(args) != 3 {
-                        return "Invalid no of arguments passed"
-                }
+	renderFunc := js.FuncOf(func(this js.Value, args []js.Value) any {
+		if len(args) != 3 {
+			return "Invalid no of arguments passed"
+		}
 		renderDoc := js.Global().Get("document")
 		if !renderDoc.Truthy() {
 			return "Unable to get document object"
@@ -423,18 +428,21 @@ func renderWrapper() js.Func {
 			return "Unable to get output text area"
 		}
 		custom_script := args[0].Bool()
-                script := args[0].String()
-		lcode := args[1].String()
-                // fmt.Println("len(input)", len(inputSVG))
-                status, err := render(custom_script, script, lcode)
-                if err != nil {
-                        fmt.Printf("unable to render using script %s\n", err)
-                        return err.Error()
-                }
+		script := args[1].String()
+
+		fmt.Println("script: ", script)
+		fmt.Println("custom_script (bool): ", custom_script)
+		lcode := args[2].String()
+		// fmt.Println("len(input)", len(inputSVG))
+		status, err := render(custom_script, script, lcode)
+		if err != nil {
+			fmt.Printf("unable to render using script %s\n", err)
+			return err.Error()
+		}
 		renderOutputTextArea.Set("value", status)
-                return status
-        })
-        return renderFunc
+		return status
+	})
+	return renderFunc
 }
 // script is the SVG itself if the user uploaded a custom script,
 // otherwise it's the name of one of the embedded scripts
@@ -450,29 +458,29 @@ func render(custom_script bool, script string, lcode string) (string, error) {
 }
 
 // func render(script_svg_str string) (string, error) {
-// 	// Create a pipe to capture stdout
-// 	r, w, _ := os.Pipe()
-// 	stdout := os.Stdout // keep backup of the real stdout
-// 	os.Stdout = w       // redirect stdout to the write end of the pipe
+//	// Create a pipe to capture stdout
+//	r, w, _ := os.Pipe()
+//	stdout := os.Stdout // keep backup of the real stdout
+//	os.Stdout = w       // redirect stdout to the write end of the pipe
 
-// 	// user supplied handwriting system definition
-// 	script := load_script(script_svg_str)
-// 	input_text := `How are you doing? Let's see how well we can do at testing logographs! This is not my forte, but I just want you to know about my system and what you can do with this.`
-// 	fmt.Println("input_text: ", input_text)
-// 	language_code := "en_US"
-// 	document := Parse(input_text, language_code, script)
-// 	fmt.Println("document: ", document)
+//	// user supplied handwriting system definition
+//	script := load_script(script_svg_str)
+//	input_text := `How are you doing? Let's see how well we can do at testing logographs! This is not my forte, but I just want you to know about my system and what you can do with this.`
+//	fmt.Println("input_text: ", input_text)
+//	language_code := "en_US"
+//	document := Parse(input_text, language_code, script)
+//	fmt.Println("document: ", document)
 
-// 	// Now restore stdout and close the write end of the pipe 
-// 	os.Stdout = stdout
-// 	w.Close()
+//	// Now restore stdout and close the write end of the pipe
+//	os.Stdout = stdout
+//	w.Close()
 
-// 	// Read from the stdout pipe into a buffer
-// 	var buf bytes.Buffer
-// 	io.Copy(&buf, r)
-	 
-// 	// return the stdout content
-// 	return buf.String(), nil
+//	// Read from the stdout pipe into a buffer
+//	var buf bytes.Buffer
+//	io.Copy(&buf, r)
+
+//	// return the stdout content
+//	return buf.String(), nil
 // }
 
 func main() {
@@ -489,8 +497,8 @@ func main() {
 
 	fmt.Println("Go web assembly")
 	js.Global().Set("renderSVG", renderWrapper())
-	  <-make(chan struct{})
-	
+	<-make(chan struct{})
+
 	// user supplied handwriting system definition
 	// script := load_script("scripts/teen_script.svg")
 	// fmt.Println(script)
@@ -508,10 +516,10 @@ func main() {
 	// fmt.Println("document: ", document)
 
 	// js.Global().Set("processFile", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-	// 	// parse SVG file content
-	// 	data := args[0].String()
-	// 	println(data) // check what it prints
-	// 	return nil
+	//	// parse SVG file content
+	//	data := args[0].String()
+	//	println(data) // check what it prints
+	//	return nil
 	// }))
 
 	// c := make(chan struct{}, 0)
@@ -522,10 +530,10 @@ func main() {
 	// <-c
 	// fmt.Println("Go Web Assembly")
 
-        // js.Global().Set("printSVG", jsonWrapper())
+	// js.Global().Set("printSVG", jsonWrapper())
 
-        // <-make(chan struct{})
-	
+	// <-make(chan struct{})
+
 
 	// pos := canvas.Point{X: 10, Y: 180}
 	// yPos := pos.Y
