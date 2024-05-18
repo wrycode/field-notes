@@ -2,16 +2,6 @@ var lcode = "en_US";
 var builtin_script_str = "teen_script.svg";
 var custom_script_str;
 
-// document.getElementById("builtin_script_select").addEventListener("change", function(e){
-//     if(e.target.value !== "") {
-//         builtin_script_str = e.target.value;
-//         custom_script = null;
-//         document.getElementById("custom_script_select").disabled = true;
-//     } else {
-//         document.getElementById("custom_script_select").disabled = false;
-//     }
-// });
-
 document.getElementById("custom_script_select").addEventListener("change", function(e){
     if(e.target.files.length > 0) {
         builtin_script_str = null;
@@ -25,37 +15,20 @@ document.getElementById("custom_script_select").addEventListener("change", funct
 
 document.getElementById('renderButton').addEventListener('click', function() {
     var debug_output = document.getElementById('render_text_output');
-
     
     if (builtin_script_str) {
-	result = renderSVG(false, builtin_script_str, lcode)
+	renderSVG(false, builtin_script_str, lcode)
+    } else {
+	var file = document.getElementById('custom_script_select').files[0];
+	var reader = new FileReader();
+	reader.readAsText(file, 'UTF-8');
+        reader.onload = function (evt) {
+            renderSVG(true, evt.target.result, lcode);
+        }
+    reader.onerror = function (evt) {
+        debug_output.textContent = "An error occurred reading the file.";
+        }
     }
-    
-    
-    // var custom_script_file = document.getElementById('custom_script_select').files[0];
-    // var file = custom_script_file.files[0];
-    
-    // debug_output.textContent = `Language code: ${lcode}, Built-in Script: ${builtin_script_str}, Custom Script: ${custom_script_str}`;
-    
-    // if (file) {
-    //     var reader = new FileReader();
-    //     reader.readAsText(file, 'UTF-8');
-    //     reader.onload = function (evt) {
-    //         renderSVG(evt.target.result, lcode);
-    //         // assuming renderSVG returns a node or a string you can display
-    //         var result = renderSVG(evt.target.result);
-    //         // if (typeof result === "string") {
-    //         //     output.textContent = result;
-    //         // } else if (result instanceof Node) {
-    //         //     output.appendChild(result);
-    //         // }
-    //     }
-   //  reader.onerror = function (evt) {
-   //          output.textContent = "An error occurred reading the file.";
-   //      }
-   // } else {
-   //      output.textContent = "No file selected!";
-   //  }
 });
 
 var languages =

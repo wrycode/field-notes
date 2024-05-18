@@ -236,7 +236,7 @@ func (t Token) String() string {
    rendering.
 */
 type Metaform struct {
-	name string // The string of characters represented by the Metaform
+	Name string // The string of characters represented by the Metaform
 	Tokens []Token		// must have at least 1
 	// ipa_word		// IPA string
 	contains_out_of_script_characters bool
@@ -277,6 +277,12 @@ func Parse(input string, lcode string, script *Script) Document {
 	doc := Document{
 		Metaforms: make([]Metaform, 0, len(words)*2),
 	}
+
+	space := Metaform{
+		Tokens: []Token{Token {Name: " "}},
+		Name: " ",
+	}
+
 
 	// fmt.Println("logograms: ")
 	// script.Logos.Output()
@@ -326,11 +332,12 @@ func Parse(input string, lcode string, script *Script) Document {
 				i = next_word_pos
 				metaform := Metaform{
 					Tokens:        []Token{logo},
-					name: matched_phrase_or_logo,
+					Name: matched_phrase_or_logo,
 					// height:        10.0,
 					// width:         15.0,
 				}
 				doc.Metaforms = append(doc.Metaforms, metaform)
+				doc.Metaforms = append(doc.Metaforms, space)
 				continue
 			}
 		}
@@ -364,7 +371,7 @@ func Parse(input string, lcode string, script *Script) Document {
 
 		metaform := Metaform{
 			Tokens:        []Token{},
-			name: word,
+			Name: word,
 			// contains_out_of_script_characters: false
 			// height:        10.0,
 			// width:         15.0,
@@ -391,22 +398,23 @@ func Parse(input string, lcode string, script *Script) Document {
 
 				if err == nil { // new, longer form found
 					if new_val.(Token).Name == new_form_key  { // exact match
-							form_key = new_form_key
-							val = new_val
-						}
-					} else if errors.Is(err, prefixtree.ErrPrefixAmbiguous) {
-					} else {
-						seq_end -= 1 // need
-						// to backtrack one character since no match was found
-						break
+						form_key = new_form_key
+						val = new_val
 					}
+				} else if errors.Is(err, prefixtree.ErrPrefixAmbiguous) {
+				} else {
+					seq_end -= 1 // need
+					// to backtrack one character since no match was found
+					break
 				}
+			}
 			if val != nil {
 				metaform.Tokens = append(metaform.Tokens, val.(Token))
 			}
 			current_char = seq_end
 		}
 		doc.Metaforms = append(doc.Metaforms, metaform)
+		doc.Metaforms = append(doc.Metaforms, space)
 		i++
 	}
 
@@ -435,8 +443,8 @@ func renderWrapper() js.Func {
 		// fmt.Println("len(input)", len(inputSVG))
 		status := render(custom_script, script, lcode)
 		// if err != nil {
-		// 	fmt.Printf("unable to render using script %s\n", err)
-		// 	return err.Error()
+		//	fmt.Printf("unable to render using script %s\n", err)
+		//	return err.Error()
 		// }
 		renderOutputTextArea.Set("value", status)
 		return nil
@@ -459,60 +467,50 @@ func render(custom_script bool, script string, lcode string) string {
 }
 
 func draw_image(d Document) string {
-	// Create new canvas of dimension 100x100 mm
-	// c := canvas.New(200, 200)
-
-	// Create a canvas context used to keep drawing state
-	// pos := canvas.Point{X: 10, Y: 180}
-	// yPos := pos.Y
+	// Grab the canvas from the DOM
 	cvs := js.Global().Get("document").Call("getElementById", "output_canvas")
-	c := htmlcanvas.New(cvs, 200, 200, 1.0)
+	c := htmlcanvas.New(cvs, 200, 200, 4.0)
+	// Create a canvas context used to keep drawing state
 	ctx := canvas.NewContext(c)
 	var Transparent = color.RGBA{0x00, 0x00, 0x00, 0x00} // Reba(0, 0, 0, 0)
 	ctx.SetFillColor(Transparent)
 	ctx.SetStrokeColor(canvas.Black)
 	ctx.SetStrokeWidth(0.265)
-// Create a triangle path from an SVG path and draw it to the canvas
-	triangle, err := canvas.ParseSVGPath("L60 0L30 60z")
-	if err != nil {
-		panic(err)
+
+	pos := canvas.Point{X: 10, Y: 180}
+	yPos := pos.Y
+
+	for _, m := range d.Metaforms {
+		if m.Name == ` ` {
+			pos.Y = yPos
+			pos.X += 10
+			if pos.X >= 180 {
+				pos.X = 20
+				pos.Y -= 20
+				yPos = pos.Y
+			}
+		} else {
+			for _, t := range m.Tokens {
+				if t.Path != "" {
+					formPath, err := canvas.ParseSVGPath(t.Path)
+					if err == nil {
+						ctx.DrawPath(pos.X, pos.Y, formPath)
+						pos.X += formPath.Pos().X
+						pos.Y += formPath.Pos().Y
+					}
+				}
+			}
+		}
 	}
-	ctx.SetFillColor(canvas.Mediumseagreen)
-	ctx.DrawPath(20, 20, triangle)
-	// ctx.DrawPath(2, 2, "m 2 2 l 2 4")
-
-	// if err := ctx.DrawPath("m 2 2 l 2 4"); err != nil {
-	// 	panic(err)
-	// }
-	// 	if err := renderers.Write("rendered_text.png", c, canvas.DPMM(4)); err != nil {
-	// 	panic(err)
-	// }
 	return "success!!"
-
-	// for _, v := range d.Metaforms {
-	// 	if v.Name == ` ` {
-	// 		pos.Y = yPos
-	// 		pos.X += 10
-	// 		if pos.X >= 180 {
-	// 			pos.X = 20
-	// 			pos.Y -= 20
-	// 			yPos = pos.Y
-	// 		}
-	// 	} else {
-
-	// 	}
-	// 	formPath, err := canvas.ParseSVGPath(v.Path)
-	// 	if err == nil {
-	// 		ctx.DrawPath(pos.X, pos.Y, formPath)
-	// 		pos.X += formPath.Pos().X
-	// 		pos.Y += formPath.Pos().Y
-	// 	}
+	// Create a triangle path from an SVG path and draw it to the canvas
+	// triangle, err := canvas.ParseSVGPath("L60 0L30 60z")
+	// if err != nil {
+	//	panic(err)
 	// }
-
-	// Base64-encode the PNG
-	// return base64.StdEncoding.EncodeToString(b.Bytes())
-	// return b
-	// Rasterize the canvas and write to a PNG file with 3.2 dots-per-mm (320x320 px)
+	// ctx.SetFillColor(canvas.Mediumseagreen)
+	// ctx.DrawPath(20, 20, triangle)
+	// ctx.DrawPath(2, 2, "m 2 2 l 2 4")
 }
 
 func main() {
