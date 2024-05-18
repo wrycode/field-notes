@@ -29,12 +29,8 @@ document.getElementById('renderButton').addEventListener('click', function() {
     
     if (builtin_script_str) {
 	result = renderSVG(false, builtin_script_str, lcode)
-            if (typeof result === "string") {
-                debug_output.textContent = result;
-            } else if (result instanceof Node) {
-                debug_output.appendChild(result);
-            }
     }
+    
     
     // var custom_script_file = document.getElementById('custom_script_select').files[0];
     // var file = custom_script_file.files[0];

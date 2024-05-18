@@ -1,7 +1,9 @@
 package main
 
 import (
-	// "github.com/tdewolff/canvas"
+	"github.com/tdewolff/canvas"
+	"github.com/tdewolff/canvas/renderers/htmlcanvas"
+
 	// "github.com/tdewolff/canvas/renderers"
 	// "github.com/alecthomas/repr"
 	// "github.com/alecthomas/participle/v2"
@@ -10,10 +12,7 @@ import (
 	"fmt"
 	// "io/ioutil"
 	"encoding/json"
-	// "image/color"
-	// "os"
-	// "bytes"
-	// "io"
+	"image/color"
 	"github.com/beevik/etree"
 	"log"
 	"strconv"
@@ -237,8 +236,8 @@ func (t Token) String() string {
    rendering.
 */
 type Metaform struct {
+	name string // The string of characters represented by the Metaform
 	Tokens []Token		// must have at least 1
-	original_word string	// The string of characters represented by the Metaform pre-IPA conversion.
 	// ipa_word		// IPA string
 	contains_out_of_script_characters bool
 	// Image - might store the rendered path here, not sure yet
@@ -327,7 +326,7 @@ func Parse(input string, lcode string, script *Script) Document {
 				i = next_word_pos
 				metaform := Metaform{
 					Tokens:        []Token{logo},
-					original_word: matched_phrase_or_logo,
+					name: matched_phrase_or_logo,
 					// height:        10.0,
 					// width:         15.0,
 				}
@@ -365,7 +364,7 @@ func Parse(input string, lcode string, script *Script) Document {
 
 		metaform := Metaform{
 			Tokens:        []Token{},
-			original_word: word,
+			name: word,
 			// contains_out_of_script_characters: false
 			// height:        10.0,
 			// width:         15.0,
@@ -434,66 +433,89 @@ func renderWrapper() js.Func {
 		fmt.Println("custom_script (bool): ", custom_script)
 		lcode := args[2].String()
 		// fmt.Println("len(input)", len(inputSVG))
-		status, err := render(custom_script, script, lcode)
-		if err != nil {
-			fmt.Printf("unable to render using script %s\n", err)
-			return err.Error()
-		}
+		status := render(custom_script, script, lcode)
+		// if err != nil {
+		// 	fmt.Printf("unable to render using script %s\n", err)
+		// 	return err.Error()
+		// }
 		renderOutputTextArea.Set("value", status)
-		return status
+		return nil
+		// return image
 	})
 	return renderFunc
 }
 // script is the SVG itself if the user uploaded a custom script,
 // otherwise it's the name of one of the embedded scripts
-func render(custom_script bool, script string, lcode string) (string, error) {
+func render(custom_script bool, script string, lcode string) string {
 	// user supplied handwriting system definition
 	s := load_script(custom_script, script)
 	input_text := `How are you doing? Let's see how well we can do at testing logographs! This is not my forte, but I just want you to know about my system and what you can do with this`
 	fmt.Println("input_text: ", input_text)
 	// language_code := "en_US"
 	document := Parse(input_text, lcode, s)
+	fmt.Println(draw_image(document))
 	fmt.Println("document: ", document)
-	return "success", nil
+	return "success"
 }
 
-// func render(script_svg_str string) (string, error) {
-//	// Create a pipe to capture stdout
-//	r, w, _ := os.Pipe()
-//	stdout := os.Stdout // keep backup of the real stdout
-//	os.Stdout = w       // redirect stdout to the write end of the pipe
-
-//	// user supplied handwriting system definition
-//	script := load_script(script_svg_str)
-//	input_text := `How are you doing? Let's see how well we can do at testing logographs! This is not my forte, but I just want you to know about my system and what you can do with this.`
-//	fmt.Println("input_text: ", input_text)
-//	language_code := "en_US"
-//	document := Parse(input_text, language_code, script)
-//	fmt.Println("document: ", document)
-
-//	// Now restore stdout and close the write end of the pipe
-//	os.Stdout = stdout
-//	w.Close()
-
-//	// Read from the stdout pipe into a buffer
-//	var buf bytes.Buffer
-//	io.Copy(&buf, r)
-
-//	// return the stdout content
-//	return buf.String(), nil
-// }
-
-func main() {
-
+func draw_image(d Document) string {
 	// Create new canvas of dimension 100x100 mm
 	// c := canvas.New(200, 200)
 
-	// // Create a canvas context used to keep drawing state
-	// ctx := canvas.NewContext(c)
-	// var Transparent = color.RGBA{0x00, 0x00, 0x00, 0x00} // Reba(0, 0, 0, 0)
-	// ctx.SetFillColor(Transparent)
-	// ctx.SetStrokeColor(canvas.Black)
-	// ctx.SetStrokeWidth(0.265)
+	// Create a canvas context used to keep drawing state
+	// pos := canvas.Point{X: 10, Y: 180}
+	// yPos := pos.Y
+	cvs := js.Global().Get("document").Call("getElementById", "output_canvas")
+	c := htmlcanvas.New(cvs, 200, 200, 1.0)
+	ctx := canvas.NewContext(c)
+	var Transparent = color.RGBA{0x00, 0x00, 0x00, 0x00} // Reba(0, 0, 0, 0)
+	ctx.SetFillColor(Transparent)
+	ctx.SetStrokeColor(canvas.Black)
+	ctx.SetStrokeWidth(0.265)
+// Create a triangle path from an SVG path and draw it to the canvas
+	triangle, err := canvas.ParseSVGPath("L60 0L30 60z")
+	if err != nil {
+		panic(err)
+	}
+	ctx.SetFillColor(canvas.Mediumseagreen)
+	ctx.DrawPath(20, 20, triangle)
+	// ctx.DrawPath(2, 2, "m 2 2 l 2 4")
+
+	// if err := ctx.DrawPath("m 2 2 l 2 4"); err != nil {
+	// 	panic(err)
+	// }
+	// 	if err := renderers.Write("rendered_text.png", c, canvas.DPMM(4)); err != nil {
+	// 	panic(err)
+	// }
+	return "success!!"
+
+	// for _, v := range d.Metaforms {
+	// 	if v.Name == ` ` {
+	// 		pos.Y = yPos
+	// 		pos.X += 10
+	// 		if pos.X >= 180 {
+	// 			pos.X = 20
+	// 			pos.Y -= 20
+	// 			yPos = pos.Y
+	// 		}
+	// 	} else {
+
+	// 	}
+	// 	formPath, err := canvas.ParseSVGPath(v.Path)
+	// 	if err == nil {
+	// 		ctx.DrawPath(pos.X, pos.Y, formPath)
+	// 		pos.X += formPath.Pos().X
+	// 		pos.Y += formPath.Pos().Y
+	// 	}
+	// }
+
+	// Base64-encode the PNG
+	// return base64.StdEncoding.EncodeToString(b.Bytes())
+	// return b
+	// Rasterize the canvas and write to a PNG file with 3.2 dots-per-mm (320x320 px)
+}
+
+func main() {
 
 	fmt.Println("Go web assembly")
 	js.Global().Set("renderSVG", renderWrapper())
@@ -515,50 +537,4 @@ func main() {
 	// document := Parse(input_text, language_code, script)
 	// fmt.Println("document: ", document)
 
-	// js.Global().Set("processFile", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-	//	// parse SVG file content
-	//	data := args[0].String()
-	//	println(data) // check what it prints
-	//	return nil
-	// }))
-
-	// c := make(chan struct{}, 0)
-
-	// println("WASM Go Initialized")
-	// // register functions
-	// registerCallbacks()
-	// <-c
-	// fmt.Println("Go Web Assembly")
-
-	// js.Global().Set("printSVG", jsonWrapper())
-
-	// <-make(chan struct{})
-
-
-	// pos := canvas.Point{X: 10, Y: 180}
-	// yPos := pos.Y
-	// for _, v := range document.Forms {
-	//	if v.Name == ` ` {
-	//		pos.Y = yPos
-	//		pos.X += 10
-	//		if pos.X >= 180 {
-	//			pos.X = 20
-	//			pos.Y -= 20
-	//			yPos = pos.Y
-	//		}
-	//	} else {
-
-	//	}
-	//	formPath, err := canvas.ParseSVGPath(v.Path)
-	//	if err == nil {
-	//		ctx.DrawPath(pos.X, pos.Y, formPath)
-	//		pos.X += formPath.Pos().X
-	//		pos.Y += formPath.Pos().Y
-	//	}
-	// }
-
-	// // Rasterize the canvas and write to a PNG file with 3.2 dots-per-mm (320x320 px)
-	// if err := renderers.Write("rendered_text.png", c, canvas.DPMM(4)); err != nil {
-	//	panic(err)
-	// }
 }
