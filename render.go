@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"io"
 	"github.com/tdewolff/canvas"
+	"github.com/tdewolff/canvas/renderers/rasterizer"	
+	"image"
 	"github.com/beevik/prefixtree"
 	"fmt"
 	"encoding/json"
@@ -16,6 +18,10 @@ import (
 	"html"
 	"errors"
 	"embed"
+	// "image/draw"
+	// "image/png"
+	// "os"
+	
 )
 
 // Options for rendering
@@ -201,9 +207,9 @@ func (t Token) String() string {
    "writing". ` ` (space) is the only token that is not converted to a
    Metaform, because all metaforms are assumed to be separated by a
    space. Spacing drawn between metaforms is therefore handled by the
-   rendering code. Note that there is a metaform for newlines which
-   are handled by the rendering code, and all other whitespace (like
-   tabs) is ignored.
+   rendering code. Note that there IS a metaform for newlines which
+   are handled by the rendering code, and all other whitespace chars (like
+   tabs) are ignored.
 
    Metaforms also contain extra information for debugging and
    rendering.
@@ -211,65 +217,100 @@ func (t Token) String() string {
 type Metaform struct {
 	Name string // The string of characters represented by the Metaform
 	Tokens []Token		// must have at least 1
-	contains_out_of_script_characters bool // 
+	contains_out_of_script_characters bool //
+	Img image.Image
 	// Image - might store the rendered path here, not sure yet
 	// Path - or here
 	height float64		
 	width float64
 }
 
-// func (m Metaform) render(debug bool) {
-
-// 	path, _ := canvas.ParseSVGPath("m 0 0")
-	
-// 	// Create a single path to work with
-// 	for _, t := range m.Tokens {
-// 		if t.Path != "" {
-// 			newpath, err := canvas.ParseSVGPath(t.Path)
-// 			path.Join(newpath)
-// 		}
-// 	}
-
-
-// 	// func (p *Path) FastBounds() Rect
-
-// 	// FastBounds returns the maximum bounding box rectangle of the path. It is quicker than Bounds. 	
-// 	c := canvas.New(100,100) // Arbitrary starting canvas dimensions
-// 	ctx := canvas.NewContext(c)
-
-
-// 	// Join two paths together
-// 	// Join(q *Path) *Path
-
-// 	// // Append the path's commands
-// 	// Append(q *Path) *Path
-	
-// 	var minX, minY, maxX, maxY float64
-// 	pos := canvas.Point{X: 0, Y: 0}
-// 	for _, t := range m.Tokens {
-// 		if t.Path != "" {
-// 			path, err := canvas.ParseSVGPath(t.Path)
-// 			if err == nil {
-// 				ctx.DrawPath(pos.X, pos.Y, path)
-// 				pos.X += path.Pos().X
-// 				pos.Y += path.Pos().Y
-// 			}
-// 		}
-// 	}
-// }
-
-
-func (m Metaform) String() string {
-	var tokens []string
-	for _, token := range m.Tokens {
-		tokens = append(tokens, token.Name)
-	}
-	return strings.Join(tokens, "·")
+func canvasToImage(c *canvas.Canvas) image.Image {
+	// var res canvas.Resolution
+	// res = canvas.Resolution(20)
+	res := canvas.DefaultResolution
+	col := canvas.LinearColorSpace{}
+	img := rasterizer.Draw(c, res, col)
+	// fmt.Println("type")
+	// fmt.Println(img)
+	return img
 }
+
+func (m *Metaform) render(debug bool, width float64, height float64) *Metaform {
+	// TODO: handle forms with no path
+	// var path *canvas.Path
+	// path, err := canvas.ParseSVGPath("")
+	// if err != nil {
+	// 	fmt.Println("erro at line 243: ", err)
+	// }
+	
+	// // Create a single path to work with
+	// for _, t := range m.Tokens {
+	// 	if t.Path != "" {
+	// 		newpath, _ := canvas.ParseSVGPath(t.Path)
+	// 		path = path.Append(newpath)
+	// 	}
+	// }
+	// fmt.Println(m.Name)
+	// fmt.Println("Path: ")
+	// fmt.Println(path)
+
+
+	// yPos := pos.Y
+
+	c := canvas.New(width, height)
+	ctx := canvas.NewContext(c)
+	var Transparent = color.RGBA{0x00, 0x00, 0x00, 0x00} // Reba(0, 0, 0, 0)
+	ctx.SetFillColor(Transparent)
+	ctx.SetStrokeColor(canvas.Black)
+	ctx.SetStrokeWidth(0.265)
+	
+	// Create a single path to work with
+	pos := canvas.Point{X: 0, Y: 0}
+	path, _ := canvas.ParseSVGPath("")
+	
+	for _, t := range m.Tokens {
+		if t.Path != "" {
+			newPath, err := canvas.ParseSVGPath(t.Path)
+			if err != nil {
+				fmt.Println("Error parsing path: for ",m.Name, t.Name, err)
+			}
+			newPath = newPath.Translate(pos.X, pos.Y)
+			path = path.Join(newPath)
+			// pos.X += path.Pos().X
+			// pos.Y += path.Pos().Y
+		}
+	}
+
+	
+	// ctx.DrawPath(pos.X, pos.Y, formPath)
+	// for _, t := range m.Tokens {
+	// 	if t.Path != "" {
+	// 		newpath, _ := canvas.ParseSVGPath(t.Path)
+	// 		path = path.Append(newpath)
+	// 	}
+	// }
+
+	ctx.DrawPath(0, 0, path.FastBounds().ToPath())
+	ctx.DrawPath(0, 0, path)
+	// m.height = 5.0
+	m.Img = canvasToImage(c)
+
+	return m
+}
+
+
+// func (m Metaform) String() string {
+// 	var tokens []string
+// 	for _, token := range m.Tokens {
+// 		tokens = append(tokens, token.Name)
+// 	}
+// 	return strings.Join(tokens, "·")
+// }
 
 // A document is a sequence of Metaforms to be rendered.
 type Document struct {
-	Metaforms []Metaform
+	Metaforms []*Metaform
 }
 
 // returns a Document to be rendered
@@ -287,7 +328,7 @@ func Parse(input string, lcode string, script *Script) Document {
 	words := strings.Fields(input)
 
 	doc := Document{
-		Metaforms: make([]Metaform, 0, len(words)*2),
+		Metaforms: make([]*Metaform, 0, len(words)*2),
 	}
 
 	// Loop through words, converting to logograms or IPA and appending to the document
@@ -340,7 +381,7 @@ func Parse(input string, lcode string, script *Script) Document {
 					// height:        10.0,
 					// width:         15.0,
 				}
-				doc.Metaforms = append(doc.Metaforms, metaform)
+				doc.Metaforms = append(doc.Metaforms, &metaform)
 				continue
 			}
 		}
@@ -413,7 +454,7 @@ func Parse(input string, lcode string, script *Script) Document {
 			}
 			current_char = seq_end
 		}
-		doc.Metaforms = append(doc.Metaforms, metaform)
+		doc.Metaforms = append(doc.Metaforms, &metaform)
 		i++
 	}
 
@@ -425,11 +466,7 @@ var scripts embed.FS
 
 // Renders the handwritten output to the provided canvas
 func Render(options string, c *canvas.Canvas, log *log.Logger) {
-
-	fmt.Println("hello")
 	var o Options
-
-	fmt.Println(options)
 	// Unmarshal the JSON string into opts
 	err := json.Unmarshal([]byte(options), &o)
 
@@ -437,8 +474,8 @@ func Render(options string, c *canvas.Canvas, log *log.Logger) {
 		log.Println(err)
 	}
 
-	fmt.Println("printing o")
-	log.Println(o)
+	// fmt.Println("printing o")
+	// log.Println(o)
 	
 	// handwriting system definition
 	var script *Script
@@ -462,34 +499,51 @@ func Render(options string, c *canvas.Canvas, log *log.Logger) {
 
 	// Create a canvas context used to keep drawing state
 	ctx := canvas.NewContext(c)
-	var Transparent = color.RGBA{0x00, 0x00, 0x00, 0x00} // Reba(0, 0, 0, 0)
-	ctx.SetFillColor(Transparent)
-	ctx.SetStrokeColor(canvas.Black)
-	ctx.SetStrokeWidth(0.265)
-	
-	pos := canvas.Point{X: 10, Y: 180}
-	yPos := pos.Y
-	
+
+	fmt.Println(ctx)
 	for _, m := range d.Metaforms {
-		if m.Name == ` ` {
-			pos.Y = yPos
-			pos.X += 10
-			if pos.X >= 180 {
-				pos.X = 20
-				pos.Y -= 20
-				yPos = pos.Y
-			}
-		} else {
-			for _, t := range m.Tokens {
-				if t.Path != "" {
-					formPath, err := canvas.ParseSVGPath(t.Path)
-					if err == nil {
-						ctx.DrawPath(pos.X, pos.Y, formPath)
-						pos.X += formPath.Pos().X
-						pos.Y += formPath.Pos().Y
-					}
-				}
-			}
-		}
+		m = m.render(false, 50, 50)
 	}
+
+	// fmt.Println(d.Metaforms)
+	fmt.Println(d.Metaforms[0])
+
+	ctx.DrawImage(0, 0, d.Metaforms[0].Img, canvas.DefaultResolution)
+	// func (c *Context) DrawImage(x, y float64, img image.Image, resolution Resolution)
+	
+	// start stitching
+	// upperLeftX := d.Metaforms[0].Img.Bounds().Max.X
+	// upperLeftY := d.Metaforms[0].Img.Bounds().Max.Y
+	// upperLeftX := 5
+	// upperLeftY := 5
+	
+	// imgWidth := upperLeftX * len(d.Metaforms)
+	// imgHeight := upperLeftY
+
+	// // create new blank image with a size that depends on number of images
+	// newImage := image.NewNRGBA(image.Rect(0, 0, 100, 100))
+
+	// // Start drawing images from the slice to new blank image
+	// for i, m := range d.Metaforms {
+	// 	if m.Img != nil {
+	// 	rect := image.Rect(upperLeftX*i, 0, upperLeftX*i+upperLeftX, imgHeight)
+	// 		draw.Draw(newImage, rect, m.Img, m.Img.Bounds().Min, draw.Src)
+	
+	// 	}
+	// }
+
+	// // Create resulting image file on disk.
+	// imgFile, err := os.Create("tiled.png")
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// defer imgFile.Close()
+
+	// // Encode writes the Image m to w in PNG format.
+	// err = png.Encode(imgFile, newImage)
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	
 }
