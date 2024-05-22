@@ -32,6 +32,8 @@ type Options struct {
 	Language_code string `json:"Language_code"`
 	Image_width float64 `json:"Image_width"`
 	Input_text string `json:"Input_text"`
+	Space_between_metaforms float64 `json:"Space_between_metaforms"`
+	Margin float64 `json:"Margin"`
 }
 
 func LoadIPADict(lang string) (map[string]string, error) {
@@ -265,7 +267,7 @@ func (m *Metaform) render(debug bool, width float64, height float64) *Metaform {
 				fmt.Println("Error parsing path: for ",m.Name, t.Name, err)
 			}
 			newPath = newPath.Translate(pos.X, pos.Y)
-			path = path.Join(newPath)
+			path = path.Append(newPath)
 			pos.X = path.Pos().X
 			pos.Y = path.Pos().Y
 		}
@@ -467,7 +469,7 @@ func Render(options string, c *canvas.Canvas, log *log.Logger) {
 	}
 
 	// fmt.Println("printing o")
-	// log.Println(o)
+	// log.Printf("%+v\n", o)
 
 	// handwriting system definition
 	var script *Script
@@ -482,33 +484,27 @@ func Render(options string, c *canvas.Canvas, log *log.Logger) {
 		script = load_script(string(script_file))
 	}
 
-	if err != nil {
-		log.Println("Error reading script: ", err)
-	}
-
 	// document to render
 	d := Parse(o.Input_text, o.Language_code, script)
 
 	// Create a canvas context used to keep drawing state
 	ctx := canvas.NewContext(c)
 
-	fmt.Println(ctx)
+	// Render each Metaform into m.Img with variable size and width
 	for _, m := range d.Metaforms {
 		m = m.render(false, 50, 50)
 	}
 
-	// fmt.Println(d.Metaforms)
-	// fmt.Println(d.Metaforms[0])
-	pos := canvas.Point{X: 10, Y: 450}
-
+	
+	pos := canvas.Point{X: o.Margin, Y: c.H - o.Margin}
 
 	for _, m := range d.Metaforms {
-		if pos.X >= 450 {
-			pos.X = 10
+		if pos.X >= (c.W - o.Margin) {
+			pos.X = o.Margin
 			pos.Y -= 90
 		}
 		// image := m.Img
-		fmt.Println("Name: ", m.Name)
+		// fmt.Println("Name: ", m.Name)
 		ctx.DrawImage(pos.X, pos.Y, m.Img, 1)
 		pos.X += float64(m.Img.Bounds().Dx() + 10)
 		// pos.Y +=

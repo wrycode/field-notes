@@ -28,6 +28,7 @@ func main() {
 	// Create new canvas
 	c := canvas.New(500,500)
 	l := log.Default()
+	l.SetFlags(0)		// remove timestamp
 	options := fileToString("options.json")
 	// options := `{
 	// "Script_debug": false,
