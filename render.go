@@ -18,15 +18,15 @@ import (
 	"html"
 	"errors"
 	"embed"
-	// "image/draw"
-	// "image/png"
-	// "os"
-
+	"math"
+	"unicode"
 )
 
 // Options for rendering
 type Options struct {
-	Script_debug bool `json:"Script_debug"`
+	Debug bool `json:"Debug"`
+	Draw_bounding_boxes bool `json:"Draw_bounding_boxes"`
+	Form_stroke_width float64 `json:"Form_stroke_width"`
 	Custom_script_svg_value  string  `json:"Custom_script_svg_value"`
 	Builtin_script_name string  `json:"Builtin_script_name"`
 	Language_code string `json:"Language_code"`
@@ -34,26 +34,27 @@ type Options struct {
 	Input_text string `json:"Input_text"`
 	Space_between_metaforms float64 `json:"Space_between_metaforms"`
 	Margin float64 `json:"Margin"`
+	Space_between_lines float64 `json:"Space_between_lines"`
 }
 
-func LoadIPADict(lang string) (map[string]string, error) {
+func LoadIPADict(lang string, log *log.Logger) (map[string]string, error) {
 	type IPAJson map[string][]map[string]string
 	var jsonDict IPAJson
 
 	resp, err := http.Get(fmt.Sprintf("https://storage.googleapis.com/ipa_dicts/%s.json", lang))
 	if err != nil {
-		fmt.Println("Error downloading IPA dictionary: ", err)
+		log.Println("Error downloading IPA dictionary: ", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("Error reading IPA dictionar: " ,err)
+		log.Println("Error reading IPA dictionary: " ,err)
 	}
 
 	err = json.Unmarshal(body, &jsonDict)
 	if err != nil {
-		fmt.Println("Error unmarshaling IPA dictionary: " ,err)
+		log.Println("Error unmarshaling IPA dictionary: " ,err)
 		return nil, err
 	}
 	return jsonDict[lang][0], err
@@ -163,17 +164,20 @@ func load_script(script string) *Script {
 	}
 }
 
-// Return a string, placing a space before and after the punctuation
+// Return a string, placing a space before and after certain
+// characters (including NEWLINES!). The reason is that newlines and
+// punctuation should be treated as their own metaform.
 func normalizePunctuation(input string) string {
-	punctuations := ".,;!?"
+	punctuations := ".,;:!?\n"
 	for _, punc := range punctuations {
 		// add spaces around punctuation only if they don't exist yet
 		input = strings.ReplaceAll(input, string(punc), " "+string(punc)+" ")
 	}
 
 	// Remove extra spaces
-	input = strings.Join(strings.Fields(input), " ")
+	input = strings.Join(customFields(input), " ")
 	return input
+
 }
 
 /* a Token is an indivisible 'unit' of a handwritten document in a
@@ -209,9 +213,10 @@ func (t Token) String() string {
    "writing". ` ` (space) is the only token that is not converted to a
    Metaform, because all metaforms are assumed to be separated by a
    space. Spacing drawn between metaforms is therefore handled by the
-   rendering code. Note that there IS a metaform for newlines which
-   are handled by the rendering code, and all other whitespace chars (like
-   tabs) are ignored.
+   rendering code. Newlines are separated by spaces and converted to
+   metaforms like other punctuation, then the rendering code handles
+   creating a new line. All other whitespace chars (like tabs) are
+   ignored.
 
    Metaforms also contain extra information for debugging and
    rendering.
@@ -219,42 +224,27 @@ func (t Token) String() string {
 type Metaform struct {
 	Name string // The string of characters represented by the Metaform
 	Tokens []Token		// must have at least 1
-	contains_out_of_script_characters bool //
+	contains_out_of_script_characters bool
 	Img image.Image
-	// Image - might store the rendered path here, not sure yet
-	// Path - or here
-	height float64
-	width float64
 }
 
-func (m *Metaform) render(debug bool, width float64, height float64) *Metaform {
-	// TODO: handle forms with no path
-	// var path *canvas.Path
-	// path, err := canvas.ParseSVGPath("")
-	// if err != nil {
-	//	fmt.Println("erro at line 243: ", err)
-	// }
+func (m Metaform) String() string {
+	var tokens []string
+	for _, token := range m.Tokens {
+		tokens = append(tokens, token.Name)
+	}
+	return strings.Join(tokens, "·")
+}
 
-	// // Create a single path to work with
-	// for _, t := range m.Tokens {
-	//	if t.Path != "" {
-	//		newpath, _ := canvas.ParseSVGPath(t.Path)
-	//		path = path.Append(newpath)
-	//	}
-	// }
-	// fmt.Println(m.Name)
-	// fmt.Println("Path: ")
-	// fmt.Println(path)
-
-
-	// yPos := pos.Y
-
-	c := canvas.New(width, height)
+// Render the form in a first pass and store it in m.Img, using the
+// smallest image size that fits the form
+func (m *Metaform) renderForm(o Options, log *log.Logger) *Metaform {
+	c := canvas.New(5,5) // Arbitrary width and height - will be cut to size later
 	ctx := canvas.NewContext(c)
-	var Transparent = color.RGBA{0x00, 0x00, 0x00, 0x00} // Reba(0, 0, 0, 0)
+	var Transparent = color.RGBA{0x00, 0x00, 0x00, 0x00}
 	ctx.SetFillColor(Transparent)
 	ctx.SetStrokeColor(canvas.Black)
-	ctx.SetStrokeWidth(0.265)
+	ctx.SetStrokeWidth(o.Form_stroke_width)
 
 	// Create a single path to work with
 	pos := canvas.Point{X: 0, Y: 0}
@@ -264,7 +254,7 @@ func (m *Metaform) render(debug bool, width float64, height float64) *Metaform {
 		if t.Path != "" {
 			newPath, err := canvas.ParseSVGPath(t.Path)
 			if err != nil {
-				fmt.Println("Error parsing path: for ",m.Name, t.Name, err)
+				log.Println("Error parsing path: for ",m.Name, t.Name, err)
 			}
 			newPath = newPath.Translate(pos.X, pos.Y)
 			path = path.Append(newPath)
@@ -275,51 +265,70 @@ func (m *Metaform) render(debug bool, width float64, height float64) *Metaform {
 
 	ctx.DrawPath(0, 0, path)
 	bounding_box := path.Bounds()
-	ctx.SetStrokeColor(canvas.Red)
-	ctx.SetStrokeWidth(0.1)
 
-	ctx.DrawPath(0, 0, bounding_box.ToPath())
+	if o.Draw_bounding_boxes {
+		ctx.SetStrokeColor(canvas.Red)
+		ctx.SetStrokeWidth(0.1)
+		ctx.DrawPath(0, 0, bounding_box.ToPath())
+	}
 
-	// c.Clip(path.Bounds())
+	// Crop the image to the path
 	c.Fit(1)
-
-	// c.Fit()
-
 	ctx.SetCoordRect(bounding_box, bounding_box.W, bounding_box.H)
-	// m.height = 5.0
 	m.Img = rasterizer.Draw(c, canvas.DefaultResolution, nil)
-
-
 	return m
 }
 
+// Redraw the form in m.Img into the center of a new image of the given height
+func (m *Metaform) centerForm(new_height float64, o Options) *Metaform {
+	// need to convert dimensions height to millimeters to
+	new_height =  new_height / canvas.DefaultResolution.DPMM()
+	form_height := float64(m.Img.Bounds().Dy()) / (canvas.DefaultResolution.DPMM())
+	form_width := float64(m.Img.Bounds().Dx()) / (canvas.DefaultResolution.DPMM()) // won't be changed
+	c := canvas.New(form_width, new_height)
 
-// func (m Metaform) String() string {
-//	var tokens []string
-//	for _, token := range m.Tokens {
-//		tokens = append(tokens, token.Name)
-//	}
-//	return strings.Join(tokens, "·")
-// }
+	ctx := canvas.NewContext(c)
+	ctx.DrawImage(0,(new_height - form_height) / 2 , m.Img, canvas.DefaultResolution)
+
+	var Transparent = color.RGBA{0x00, 0x00, 0x00, 0x00}
+
+
+	if o.Draw_bounding_boxes {
+		ctx.SetFillColor(Transparent)
+		ctx.SetStrokeColor(canvas.Blue)
+		ctx.SetStrokeWidth(0.05)
+		border := canvas.Rect{0, 0,form_width, new_height }
+		ctx.DrawPath(0, 0, border.ToPath())
+	}
+	m.Img = rasterizer.Draw(c, canvas.DefaultResolution, nil)
+	return m
+}
 
 // A document is a sequence of Metaforms to be rendered.
 type Document struct {
 	Metaforms []*Metaform
 }
 
+// like strings.Fields but don't treat newlines as whitespace
+func customFields(s string) []string {
+	return strings.FieldsFunc(s, func(r rune) bool {
+		return unicode.IsSpace(r) && r != '\n'
+	})
+}
+
 // returns a Document to be rendered
-func Parse(input string, lcode string, script *Script) Document {
-	// detach punctuation from words
+func Parse(input string, lcode string, script *Script, log *log.Logger) Document {
+	// detach punctuation and newlines from words
 	input = normalizePunctuation(input)
 
 	input = strings.ToLower(input)
 
-	ipa, err := LoadIPADict(lcode)
+	ipa, err := LoadIPADict(lcode, log)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	words := strings.Fields(input)
+	words := customFields(input)
 
 	doc := Document{
 		Metaforms: make([]*Metaform, 0, len(words)*2),
@@ -345,29 +354,24 @@ func Parse(input string, lcode string, script *Script) Document {
 			// words isn't found in the prefix tree
 			for j := i + 2; j < len(words); j++ {
 				next_phrase := strings.Join(words[i:j], " ")
-				// fmt.Println("next_phrase: ", next_phrase)
 				next_val, err := script.Logos.FindValue(next_phrase)
 
 				if err == nil {
 					next_logo := next_val.(Token)
-					// fmt.Println("1st")
 					if next_logo.Name == next_phrase { // exact match
 						logo = next_logo
 						matched_phrase_or_logo = next_phrase
 						next_word_pos = j
 					}
 				} else if errors.Is(err, prefixtree.ErrPrefixAmbiguous) {
-					// fmt.Println("2nd")
 					// continue searching for a phrase but don't save the current one
 					// because we don't have a new match
 				} else { // No match for the current word at j; time to save the logogram
-					// fmt.Println("3rd")
 					break
 				}
 			}
 
 			if matched_phrase_or_logo != "" {
-				// fmt.Println
 				i = next_word_pos
 				metaform := Metaform{
 					Tokens:        []Token{logo},
@@ -424,6 +428,7 @@ func Parse(input string, lcode string, script *Script) Document {
 					}
 				metaform.Tokens = append(metaform.Tokens, token)
 				metaform.contains_out_of_script_characters = true
+				log.Printf("Note: Metaform %v contains out-of-script character %v", metaform.Name, token.Name)
 			}
 
 			for seq_end < end {
@@ -468,8 +473,10 @@ func Render(options string, c *canvas.Canvas, log *log.Logger) {
 		log.Println(err)
 	}
 
-	// fmt.Println("printing o")
-	// log.Printf("%+v\n", o)
+	if o.Debug {
+		log.Print("Options received: ")
+		log.Printf("%+v\n", o)
+	}
 
 	// handwriting system definition
 	var script *Script
@@ -485,70 +492,67 @@ func Render(options string, c *canvas.Canvas, log *log.Logger) {
 	}
 
 	// document to render
-	d := Parse(o.Input_text, o.Language_code, script)
+	d := Parse(o.Input_text, o.Language_code, script, log)
+	if o.Debug {
+		log.Print("Parsed document: ")
+		log.Println(d)
+	}
 
 	// Create a canvas context used to keep drawing state
 	ctx := canvas.NewContext(c)
 
 	// Render each Metaform into m.Img with variable size and width
 	for _, m := range d.Metaforms {
-		m = m.render(false, 50, 50)
+		m = m.renderForm(o, log)
 	}
 
-	
 	pos := canvas.Point{X: o.Margin, Y: c.H - o.Margin}
 
-	for _, m := range d.Metaforms {
-		if pos.X >= (c.W - o.Margin) {
-			pos.X = o.Margin
-			pos.Y -= 90
-		}
-		// image := m.Img
-		// fmt.Println("Name: ", m.Name)
-		ctx.DrawImage(pos.X, pos.Y, m.Img, 1)
-		pos.X += float64(m.Img.Bounds().Dx() + 10)
-		// pos.Y +=
+	// Calculate which forms will fit on each line based on their width
+	var lines [][]*Metaform
+	lines = append(lines, []*Metaform{}) // initialize first line slice
 
-		// pos.X += m.Img.Rect.Max.X
-		// pos.Y += m.Img.Rect.Max.Y
-		// fmt.Println(image)
+	line_width := c.W - (o.Margin * 2)
+
+	current_width := 0.0
+	current_line := 0
+	for _, m := range d.Metaforms {
+		current_width += float64(m.Img.Bounds().Dx())
+		if current_width <= line_width && m.Name != "\n" {
+			lines[current_line] = append(lines[current_line], m)
+			current_width += o.Space_between_metaforms
+		} else {	// start a new line
+			lines = append(lines, []*Metaform{m})
+			current_width = float64(m.Img.Bounds().Dx()) + o.Space_between_metaforms // for next line
+			current_line++
+		}
 	}
 
-	// func (c *Context) DrawImage(x, y float64, img image.Image, resolution Resolution)
+	// Redraw forms into the center of the line based on the tallest form in each line
+	for _, line := range lines {
+		max_height := 0.0
+		for _, m := range line {
+			max_height = math.Max(max_height, float64(m.Img.Bounds().Dy()))
+		}
+		for _, m := range line {
+			m.centerForm(max_height, o)
+		}
+	}
 
-	// start stitching
-	// upperLeftX := d.Metaforms[0].Img.Bounds().Max.X
-	// upperLeftY := d.Metaforms[0].Img.Bounds().Max.Y
-	// upperLeftX := 5
-	// upperLeftY := 5
+	// Render each line
+	for _, line := range lines {
+		max_height := 0.0
+		for _, m := range line {
+			max_height = math.Max(max_height, float64(m.Img.Bounds().Dy()))
+		}
+		pos.Y -= max_height
 
-	// imgWidth := upperLeftX * len(d.Metaforms)
-	// imgHeight := upperLeftY
+		for _, m := range line {
 
-	// // create new blank image with a size that depends on number of images
-	// newImage := image.NewNRGBA(image.Rect(0, 0, 100, 100))
-
-	// // Start drawing images from the slice to new blank image
-	// for i, m := range d.Metaforms {
-	//	if m.Img != nil {
-	//	rect := image.Rect(upperLeftX*i, 0, upperLeftX*i+upperLeftX, imgHeight)
-	//		draw.Draw(newImage, rect, m.Img, m.Img.Bounds().Min, draw.Src)
-
-	//	}
-	// }
-
-	// // Create resulting image file on disk.
-	// imgFile, err := os.Create("tiled.png")
-	// if err != nil {
-	//	panic(err)
-	// }
-	// defer imgFile.Close()
-
-	// // Encode writes the Image m to w in PNG format.
-	// err = png.Encode(imgFile, newImage)
-	// if err != nil {
-	//	panic(err)
-	// }
-
-
+			ctx.DrawImage(pos.X, pos.Y, m.Img, 1)
+			pos.X += float64(m.Img.Bounds().Dx()) + o.Space_between_metaforms
+		}
+		pos.X = o.Margin
+		pos.Y -= o.Space_between_lines
+	}
 }
