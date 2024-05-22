@@ -5,21 +5,38 @@ import (
 	"log"
 	"github.com/tdewolff/canvas"
 	"github.com/tdewolff/canvas/renderers"
+	"os"
+	"io"
 )
+
+func fileToString(filename string) string {
+	f, err := os.Open(filename)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	content, err := io.ReadAll(f)
+	if err != nil {
+		panic(err)
+	}
+	return string(content)
+}
 
 func main() {
 
 	// Create new canvas
 	c := canvas.New(500,500)
 	l := log.Default()
-	options := `{
-	"Script_debug": false,
-	"Custom_script_svg_value":  "",
-	"Builtin_script_name": "teen_script.svg",
-	"Language_code": "en_US",
-	"Image_width": 500,
-	"Input_text": "How are you doing? Let's see how well we can do at testing logographs! This is not my forte, but I just want you to know about my system and what you can do with this"
-	}`
+	options := fileToString("options.json")
+	// options := `{
+	// "Script_debug": false,
+	// "Custom_script_svg_value":  "",
+	// "Builtin_script_name": "teen_script.svg",
+	// "Language_code": "en_US",
+	// "Image_width": 500,
+	// "Input_text": "Reading rainbow! How are you doing? Let's see how well we can do at testing logographs! This is not my forte, but I just want you to know about my system and what you can do with this",
+	// }`
 
 	Render(options, c, l)
 
