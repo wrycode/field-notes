@@ -1,12 +1,13 @@
 package main
 
 import (
-	"fmt"
+	// "fmt"
 	"log"
-	"github.com/tdewolff/canvas"
-	"github.com/tdewolff/canvas/renderers"
-	"os"
 	"io"
+	// "image"
+	// "image/color"
+	"image/png"
+	"os"
 )
 
 func fileToString(filename string) string {
@@ -24,13 +25,19 @@ func fileToString(filename string) string {
 }
 
 func main() {
-	c := canvas.New(500,500)
 	l := log.Default()
-	l.SetFlags(0)		// remove timestamp
 	options := fileToString("options.json")
-	Render(options, c, l)
-	if err := renderers.Write("rendered_text.png", c, canvas.DefaultResolution); err != nil {
-		fmt.Println("tes")
+	img := Render(options, l)
+
+	f, err := os.Create("rendered_text.png")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	// Encode img to f in PNG format
+	err = png.Encode(f, img)
+	if err != nil {
 		panic(err)
 	}
 

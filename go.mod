@@ -19,6 +19,8 @@ require (
 	github.com/go-latex/latex v0.0.0-20231108140139-5c1ce85aa4ea // indirect
 	github.com/go-text/typesetting v0.1.1 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
+	github.com/shurcooL/go v0.0.0-20200502201357-93f07166e636 // indirect
+	github.com/shurcooL/go-goon v1.0.0 // indirect
 	github.com/tdewolff/font v0.0.0-20240517133251-c96fa5abd1d4 // indirect
 	github.com/tdewolff/minify/v2 v2.20.24 // indirect
 	github.com/tdewolff/parse/v2 v2.7.14 // indirect

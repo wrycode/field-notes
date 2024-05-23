@@ -47,11 +47,12 @@ func LoadIPADict(lang string, log *log.Logger) (map[string]string, error) {
 	}
 	defer resp.Body.Close()
 
+
+	
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Println("Error reading IPA dictionary: " ,err)
 	}
-
 	err = json.Unmarshal(body, &jsonDict)
 	if err != nil {
 		log.Println("Error unmarshaling IPA dictionary: " ,err)
@@ -463,8 +464,8 @@ func Parse(input string, lcode string, script *Script, log *log.Logger) Document
 //go:embed scripts/*
 var scripts embed.FS
 
-// Renders the handwritten output to the provided canvas
-func Render(options string, c *canvas.Canvas, log *log.Logger) {
+// Renders the handwritten output to the provided context
+func Render(ctx *canvas.Context, options string, log *log.Logger) {
 	var o Options
 	// Unmarshal the JSON string into opts
 	err := json.Unmarshal([]byte(options), &o)
@@ -478,6 +479,9 @@ func Render(options string, c *canvas.Canvas, log *log.Logger) {
 		log.Printf("%+v\n", o)
 	}
 
+	log.SetFlags(0)		// remove timestamp
+	c := canvas.New(o.Image_width, o.Image_width)
+	
 	// handwriting system definition
 	var script *Script
 	if o.Custom_script_svg_value != "" {
@@ -498,8 +502,8 @@ func Render(options string, c *canvas.Canvas, log *log.Logger) {
 		log.Println(d)
 	}
 
-	// Create a canvas context used to keep drawing state
-	ctx := canvas.NewContext(c)
+	// // Create a canvas context used to keep drawing state
+	// ctx := canvas.NewContext(c)
 
 	// Render each Metaform into m.Img with variable size and width
 	for _, m := range d.Metaforms {
@@ -555,4 +559,6 @@ func Render(options string, c *canvas.Canvas, log *log.Logger) {
 		pos.X = o.Margin
 		pos.Y -= o.Space_between_lines
 	}
+
+	// return rasterizer.Draw(c, canvas.DefaultResolution, nil)
 }
