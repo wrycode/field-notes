@@ -43,6 +43,23 @@ document.getElementById('defaultsButton').addEventListener('click', function() {
     setDefaultValues()
 });
 
+
+document.getElementById('Custom_script_svg_value').addEventListener('change', function(event) {
+  var file = event.target.files[0];
+  if (file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      options.Custom_script_svg_value = e.target.result;
+      console.log(options); // For demonstration, shows the updated options object
+    };
+      reader.readAsText(file); // For SVGs or other text-based files
+    document.getElementById('Builtin_script_name').disabled = true;
+    document.getElementById('customScriptLabel').style.fontWeight = 'bold';
+    document.getElementById('customScriptLabel').style.color = '#007bff';
+    document.getElementById('customScriptLabel').textContent = 'Custom script selected: '+  file.name;
+      document.getElementById('Custom_script_svg_value').textContent = "change file"
+  }});
+
 // setDefaultValues();
 
 // Add event listener to form elements to update options object
