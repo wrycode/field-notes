@@ -25,30 +25,32 @@
 	<input type="file" id="Custom_script_svg_value"accept=".svg">
 	<br>
 	<br>
-	
+
 	<input type="checkbox" id="Debug" name="Debug">
 	<label for="Debug">Debug mode</label>
-	<input type="checkbox" id="Draw_bounding_boxes" name="Draw_bounding_boxes"> 
+	<input type="checkbox" id="Draw_bounding_boxes" name="Draw_bounding_boxes">
 	<label for="Draw_bounding_boxes">Draw bounding boxes</label>
-	<br>	
-	<br>	
-	Form stroke width:  <input type="number" step="0.1" id="Form_stroke_width" name="Form_stroke_width" value="0.2">
+	<br>
+	<br>
+	Form stroke width:  <input type="number" step="0.05" id="Form_stroke_width" name="Form_stroke_width" value="0.35">
 	Language:  <select id="Language_code" name="Language_code">
 	  <option value="en_US">English (US)</option>
 	</select>
 	Image width: <input type="number" id="Image_width" name="Image_width" value="500" min="25">
       </div>
       <div class="right_form">
-        Space between metaforms: <input type="number" id="Space_between_metaforms" name="Space_between_metaforms" value="10">
-	Space between lines:  <input type="number" id="Space_between_lines" name="Space_between_lines" value="15">
-	Margin:  <input type="number" id="Margin" name="Margin" value="15">
-	<textarea id="Input_text" name="Input_text"></textarea><br>
+	Space between metaforms: <input type="number" id="Space_between_metaforms" name="Space_between_metaforms" value="5">
+	Space between lines:  <input type="number" id="Space_between_lines" name="Space_between_lines" value="10">
+	Margin:  <input type="number" id="Margin" name="Margin" value="5">
+	<textarea id="Input_text" name="Input_text">Let's start a
+new paragraph. Here's a bunch of random text. How does it look?</textarea><br>
 
-	<button id="renderButton">Render</button>      	      
+	<button id="renderButton">Render</button>
+	<button id="defaultsButton">Restore Defaults</button>
       </div>
     </div>
     <div id="output">
-      <textarea id="log" name="log"readonly></textarea>      
+      <textarea id="log" name="log"readonly></textarea>
       <canvas id="canvas" width="500" height="500"></canvas>
     </div>
   </body>

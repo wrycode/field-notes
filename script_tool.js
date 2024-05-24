@@ -1,22 +1,17 @@
-var lcode = "en_US";
-var builtin_script_str = "teen_script.svg";
-var custom_script_str;
-
 var options = {
     "Debug": false,
     "Draw_bounding_boxes": false,
-    "Form_stroke_width": 0.2,
+    "Form_stroke_width": 0.35,
     "Custom_script_svg_value":  "",    
     "Builtin_script_name": "teen_script.svg",
     "Language_code": "en_US",
     "Image_width": 500,
-    "Input_text": "Let's start a\n new paragraph.",
-    "Space_between_metaforms": 10,
-    "Space_between_lines": 15,
-    "Margin": 15
+    "Input_text": "Let's start a\nnew paragraph. Here's a bunch of random text. How does it look?",
+    "Space_between_metaforms": 5,
+    "Space_between_lines": 10,
+    "Margin": 5
 };
 
-// Function to update options from form
 function updateOptions() {
     options.Debug = document.getElementById('Debug').checked;
     options.Draw_bounding_boxes = document.getElementById('Draw_bounding_boxes').checked;
@@ -28,11 +23,9 @@ function updateOptions() {
     options.Space_between_metaforms = parseInt(document.getElementById('Space_between_metaforms').value, 10);
     options.Space_between_lines = parseInt(document.getElementById('Space_between_lines').value, 10);
     options.Margin = parseInt(document.getElementById('Margin').value, 10);
-    // Potentially update display or storage with new options
-    console.log(options); // Just for demonstration
+    console.log(options);
 }
 
-// Set default values (if not using HTML inline values)
 function setDefaultValues() {
     document.getElementById('Debug').checked = options.Debug;
     document.getElementById('Draw_bounding_boxes').checked = options.Draw_bounding_boxes;
@@ -46,29 +39,19 @@ function setDefaultValues() {
     document.getElementById('Margin').value = options.Margin;
 }
 
-// Initialize form with default values
-setDefaultValues();
+document.getElementById('defaultsButton').addEventListener('click', function() {
+    setDefaultValues()
+});
+
+// setDefaultValues();
 
 // Add event listener to form elements to update options object
 document.getElementById("form-container").addEventListener('change', updateOptions);
 
 document.getElementById('renderButton').addEventListener('click', function() {
-    var debug_output = document.getElementById('render_text_output');
-    
-    if (builtin_script_str) {
 	Render(JSON.stringify(options))
-    } else {
-	var file = document.getElementById('custom_script_select').files[0];
-	var reader = new FileReader();
-	reader.readAsText(file, 'UTF-8');
-        reader.onload = function (evt) {
-            renderSVG(true, evt.target.result, lcode);
-        }
-	reader.onerror = function (evt) {
-            debug_output.textContent = "An error occurred reading the file.";
-        }
-    }
 });
+
 var languages = [
     { code: "ar", name: "Arabic" },
     { code: "de", name: "German" },
@@ -96,11 +79,11 @@ var languages = [
     { code: "zh_hant", name: "Chinese (Traditional)" }
 ];
 
-const logTextarea = document.getElementById('log');
-logTextarea.addEventListener('input', function() {
-    this.style.height = 'auto';
-    this.style.height = this.scrollHeight + 'px';
-});
+// const logTextarea = document.getElementById('log');
+// logTextarea.addEventListener('input', function() {
+//     this.style.height = 'auto';
+//     this.style.height = this.scrollHeight + 'px';
+// });
 
 document.addEventListener('DOMContentLoaded', function () {
   var languageSelect = document.getElementById('Language_code');
