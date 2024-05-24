@@ -196,7 +196,7 @@ func normalizePunctuation(input string) string {
 
    If the Token is defined in the current Script, Path contains a
    Canvas path, otherwise it is empty.
-*/
+*/ 
 
 type Token struct {
 	Name  string
@@ -480,7 +480,7 @@ func Render(ctx *canvas.Context, options string, log *log.Logger) {
 	}
 
 	log.SetFlags(0)		// remove timestamp
-	c := canvas.New(o.Image_width, o.Image_width)
+	// c := canvas.New(o.Image_width, o.Image_width)
 	
 	// handwriting system definition
 	var script *Script
@@ -504,19 +504,20 @@ func Render(ctx *canvas.Context, options string, log *log.Logger) {
 
 	// // Create a canvas context used to keep drawing state
 	// ctx := canvas.NewContext(c)
+	width, height := ctx.Size()
 
 	// Render each Metaform into m.Img with variable size and width
 	for _, m := range d.Metaforms {
 		m = m.renderForm(o, log)
 	}
 
-	pos := canvas.Point{X: o.Margin, Y: c.H - o.Margin}
+	pos := canvas.Point{X: o.Margin, Y: height - o.Margin}
 
 	// Calculate which forms will fit on each line based on their width
 	var lines [][]*Metaform
 	lines = append(lines, []*Metaform{}) // initialize first line slice
 
-	line_width := c.W - (o.Margin * 2)
+	line_width := width - (o.Margin * 2)
 
 	current_width := 0.0
 	current_line := 0
