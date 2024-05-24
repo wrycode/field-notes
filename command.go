@@ -1,12 +1,10 @@
 package main
 
 import (
-	// "fmt"
 	"log"
 	"io"
-	// "image"
-	// "image/color"
-	"image/png"
+	"github.com/tdewolff/canvas"
+	"github.com/tdewolff/canvas/renderers"
 	"os"
 )
 
@@ -27,18 +25,25 @@ func fileToString(filename string) string {
 func main() {
 	l := log.Default()
 	options := fileToString("options.json")
-	img := Render(options, l)
+	c := canvas.New(500, 500)
+	// c := canvas.New
+	ctx := canvas.NewContext(c)
+	Render(ctx, options, l)
 
-	f, err := os.Create("rendered_text.png")
-	if err != nil {
+	if err := renderers.Write("rendered_text.png", c, canvas.DPMM(3.2)); err != nil {
 		panic(err)
 	}
-	defer f.Close()
+	
+	// f, err := os.Create("rendered_text.png")
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// defer f.Close()
 
-	// Encode img to f in PNG format
-	err = png.Encode(f, img)
-	if err != nil {
-		panic(err)
-	}
+	// // Encode img to f in PNG format
+	// err = png.Encode(f, img)
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 }
