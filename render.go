@@ -560,6 +560,4 @@ func Render(ctx *canvas.Context, options string, log *log.Logger) {
 		pos.X = o.Margin
 		pos.Y -= o.Space_between_lines
 	}
-
-	// return rasterizer.Draw(c, canvas.DefaultResolution, nil)
 }

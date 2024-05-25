@@ -27,7 +27,8 @@ func renderWrapper() js.Func {
 			writer := jsWriter{logTextArea: logTextArea}
 			logger := log.New(writer, "", 0)
 			cvs := doc.Call("getElementById", "canvas")
-			c := htmlcanvas.New(cvs, 500, 500, 1.0)
+			height := cvs.Get("height").Float()
+			c := htmlcanvas.New(cvs, height, height, 1.0)
 			ctx := canvas.NewContext(c)
 
 			options := args[0].String()
