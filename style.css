@@ -15,7 +15,17 @@
 #Input_text {
     height: 100px;
 }
+#output {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+#canvas {
+  display: block;
+}
 #log {
+  width: 100%;
+  margin-bottom: 20px; 
     border: none;
     background-color: #f8f9fa;
     color: #000;
@@ -45,7 +55,7 @@ textarea {
 }
 .form-container input[type="number"],
 .form-container select {
-  display: block;
+  /* display: block; */
   width: 100%;
   padding: 5px;
   margin-top: 5px;
@@ -64,6 +74,9 @@ button {
   cursor: pointer;
 }
 
+#canvas {
+    align: center;
+}
 #renderButton:hover {
   background-color: #0056b3;
 }

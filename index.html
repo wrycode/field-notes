@@ -38,7 +38,11 @@
 	Language:  <select id="Language_code" name="Language_code">
 	  <option value="en_US">English (US)</option>
 	</select>
-	Image width: <input type="number" id="Image_width" name="Image_width" value="500" min="25">
+	<!-- Image width:  -->
+	Adjust Width: 
+    <input type="range" id="range_image_width_input" value="800" min="25" max="4000"  oninput="updateNumber(this.value)" style="vertical-align: middle;">
+    <input type="number" id="number_image_width_input" value="800" min="25" max="4000" oninput="updateSlider(this.value)" style="width: 80px;">
+	
       </div>
       <div class="right_form">
 	Space between metaforms: <input type="number" id="Space_between_metaforms" name="Space_between_metaforms" value="5">
@@ -48,12 +52,13 @@
 new paragraph. Here's a bunch of random text. How does it look?</textarea><br>
 
 	<button id="renderButton">Render</button>
-	<button id="defaultsButton">Restore Defaults</button>
+	<button id="defaultsButton">Restore Rendering Defaults</button>
       </div>
     </div>
     <div id="output">
       <textarea id="log" name="log"readonly></textarea>
-      <canvas id="canvas" width="500" height="500"></canvas>
+      <br>
+      <canvas id="canvas"></canvas>
     </div>
   </body>
   <script src="/script_tool.js"></script>

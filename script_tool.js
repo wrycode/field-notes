@@ -1,16 +1,18 @@
-var options = {
+var defaults = {
     "Debug": false,
     "Draw_bounding_boxes": false,
     "Form_stroke_width": 0.35,
     "Custom_script_svg_value":  "",    
     "Builtin_script_name": "teen_script.svg",
     "Language_code": "en_US",
-    "Image_width": 500,
     "Input_text": "Let's start a\nnew paragraph. Here's a bunch of random text. How does it look?",
     "Space_between_metaforms": 5,
     "Space_between_lines": 10,
-    "Margin": 5
-};
+    "Margin": 5,
+}
+
+// copy defaults to options variable
+var options = Object.assign({}, defaults);
 
 function updateOptions() {
     options.Debug = document.getElementById('Debug').checked;
@@ -18,7 +20,6 @@ function updateOptions() {
     options.Form_stroke_width = parseFloat(document.getElementById('Form_stroke_width').value);
     options.Builtin_script_name = document.getElementById('Builtin_script_name').value;
     options.Language_code = document.getElementById('Language_code').value;
-    options.Image_width = parseInt(document.getElementById('Image_width').value, 10);
     options.Input_text = document.getElementById('Input_text').value;
     options.Space_between_metaforms = parseInt(document.getElementById('Space_between_metaforms').value, 10);
     options.Space_between_lines = parseInt(document.getElementById('Space_between_lines').value, 10);
@@ -27,21 +28,79 @@ function updateOptions() {
 }
 
 function setDefaultValues() {
-    document.getElementById('Debug').checked = options.Debug;
-    document.getElementById('Draw_bounding_boxes').checked = options.Draw_bounding_boxes;
-    document.getElementById('Form_stroke_width').value = options.Form_stroke_width;
-    document.getElementById('Builtin_script_name').value = options.Builtin_script_name;
-    document.getElementById('Language_code').value = options.Language_code;
-    document.getElementById('Image_width').value = options.Image_width;
-    document.getElementById('Input_text').value = options.Input_text;
-    document.getElementById('Space_between_metaforms').value = options.Space_between_metaforms;
-    document.getElementById('Space_between_lines').value = options.Space_between_lines;
-    document.getElementById('Margin').value = options.Margin;
+    document.getElementById('Debug').checked = defaults.Debug;
+    document.getElementById('Draw_bounding_boxes').checked = defaults.Draw_bounding_boxes;
+    document.getElementById('Form_stroke_width').value = defaults.Form_stroke_width;
+    document.getElementById('Builtin_script_name').value = defaults.Builtin_script_name;
+    document.getElementById('Language_code').value = defaults.Language_code;
+
+    range_image_width_input.value = 800;
+    // Create a new 'change' event
+    var event = new Event('input');
+    // Dispatch it on the input element
+    range_image_width_input.dispatchEvent(event);
+    drawBackground("yellow");
+
+    document.getElementById('Input_text').value = defaults.Input_text;
+    document.getElementById('Space_between_metaforms').value = defaults.Space_between_metaforms;
+    document.getElementById('Space_between_lines').value = defaults.Space_between_lines;
+    document.getElementById('Margin').value = defaults.Margin;
+    options = Object.assign({}, defaults);    
 }
 
+// document.getElementById('Image_width').value = 500
 document.getElementById('defaultsButton').addEventListener('click', function() {
     setDefaultValues()
 });
+
+    // Access the input element
+var range_image_width_input = document.getElementById("range_image_width_input");
+    // Access the canvas element
+var canvas = document.getElementById("canvas");
+var ctx = canvas.getContext("2d");
+
+
+function drawBackground(color) {
+      ctx.fillStyle = color; // Set color to fill
+      ctx.fillRect(0, 0, canvas.width, canvas.height); // Draws the filled rectangle
+}
+
+function updateSlider(value) {
+    document.getElementById('range_image_width_input').value = value;
+}
+
+function updateNumber(value) {
+    document.getElementById('number_image_width_input').value = value;
+}
+
+function updateBoth(value) {
+    updateSlider(value);
+    updateNumber(value);
+}
+
+const image_with_input_elements = [
+  document.querySelector('#range_image_width_input'),
+  document.querySelector('#number_image_width_input')
+];
+
+image_with_input_elements.forEach(function(elem) {
+    elem.addEventListener("input", function() {
+    var newWidth = this.value; 
+    var newHeight = this.value;
+
+    canvas.width = newWidth;
+    canvas.height = newHeight;
+
+      drawBackground("yellow");
+    });
+});
+
+number_image_width_input.value = 800;
+// Create a new 'change' event
+var event = new Event('input');
+// Dispatch it on the input element
+range_image_width_input.dispatchEvent(event);
+drawBackground("yellow");
 
 
 document.getElementById('Custom_script_svg_value').addEventListener('change', function(event) {
@@ -59,8 +118,6 @@ document.getElementById('Custom_script_svg_value').addEventListener('change', fu
     document.getElementById('customScriptLabel').textContent = 'Custom script selected: '+  file.name;
       document.getElementById('Custom_script_svg_value').textContent = "change file"
   }});
-
-// setDefaultValues();
 
 // Add event listener to form elements to update options object
 document.getElementById("form-container").addEventListener('change', updateOptions);
@@ -96,12 +153,6 @@ var languages = [
     { code: "zh_hant", name: "Chinese (Traditional)" }
 ];
 
-// const logTextarea = document.getElementById('log');
-// logTextarea.addEventListener('input', function() {
-//     this.style.height = 'auto';
-//     this.style.height = this.scrollHeight + 'px';
-// });
-
 document.addEventListener('DOMContentLoaded', function () {
   var languageSelect = document.getElementById('Language_code');
 
@@ -114,15 +165,5 @@ document.addEventListener('DOMContentLoaded', function () {
       languageSelect.appendChild(option);
     });
   }
-
-  // Populate languages on document load
   populateLanguages();
-  
-  // Rest of your existing code to handle form updates, etc.
 });
-
-
-
-// let HF_intro_text = `YOU don't know about me without you have read a book by the name of The Adventures of Tom Sawyer; but that ain't no matter.  That book was made by Mr. Mark Twain, and he told the truth, mainly.  There was things which he stretched, but mainly he told the truth.  That is nothing.  I never seen anybody but lied one time or another, without it was Aunt Polly, or the widow, or maybe Mary.  Aunt Polly—Tom's Aunt Polly, she is—and Mary, and the Widow Douglas is all told about in that book, which is mostly a true book, with some stretchers, as I said before.`;
-
-// document.getElementById("Input_text").value = HF_intro_text;
