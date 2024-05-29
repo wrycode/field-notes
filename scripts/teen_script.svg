@@ -27,14 +27,14 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#ffffff"
      inkscape:document-units="mm"
-     inkscape:zoom="0.41046053"
-     inkscape:cx="-713.83235"
-     inkscape:cy="517.71117"
-     inkscape:window-width="3840"
-     inkscape:window-height="2091"
-     inkscape:window-x="0"
-     inkscape:window-y="0"
-     inkscape:window-maximized="1"
+     inkscape:zoom="4.6438308"
+     inkscape:cx="743.0288"
+     inkscape:cy="180.02379"
+     inkscape:window-width="1624"
+     inkscape:window-height="1666"
+     inkscape:window-x="26"
+     inkscape:window-y="23"
+     inkscape:window-maximized="0"
      inkscape:current-layer="layer1"
      showgrid="false"><inkscape:grid
        id="grid2"
@@ -211,7 +211,7 @@
        style="white-space:pre;shape-inside:url(#rect11-6);display:inline;fill:#ffffff;stroke:#000000;stroke-width:1.00157"><tspan
          x="245.66992"
          y="320.53906"
-         id="tspan1">p</tspan></text><text
+         id="tspan6">p</tspan></text><text
        xml:space="preserve"
        style="font-size:3.175px;fill:#ffffff;stroke:#000000;stroke-width:0.264999"
        x="234.44296"
@@ -562,10 +562,10 @@
        transform="matrix(0.74366211,0,0,0.74366211,327.4118,-510.13068)"><tspan
          x="-165"
          y="80"
-         id="tspan2">Form meaning (Phoneme, syllable, syllable combination, </tspan><tspan
+         id="tspan7">Form meaning (Phoneme, syllable, syllable combination, </tspan><tspan
          x="-165"
          y="83.968753"
-         id="tspan3">prefix/suffix, punctuation or other markup</tspan></text><text
+         id="tspan8">prefix/suffix, punctuation or other markup</tspan></text><text
        xml:space="preserve"
        style="font-size:2.36113px;white-space:pre;inline-size:67.2936;display:inline;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0;stroke-dasharray:none"
        x="42.339478"
@@ -574,13 +574,13 @@
        transform="translate(240.4526,-506.05472)"><tspan
          x="42.339478"
          y="55.417015"
-         id="tspan4">Standardized IPA pronunciation: IMPORTANT: Copy and </tspan><tspan
+         id="tspan9">Standardized IPA pronunciation: IMPORTANT: Copy and </tspan><tspan
          x="42.339478"
          y="58.368427"
-         id="tspan5">paste this value into the ID for the form path in the next </tspan><tspan
+         id="tspan12">paste this value into the ID for the form path in the next </tspan><tspan
          x="42.339478"
          y="61.31984"
-         id="tspan10">column</tspan></text><text
+         id="tspan13">column</tspan></text><text
        xml:space="preserve"
        style="font-size:2.36113px;fill:#000000;stroke:#000000;stroke-width:0"
        x="382.20874"
@@ -1817,7 +1817,7 @@
        style="white-space:pre;shape-inside:url(#rect11-6-6);display:inline;fill:#ffffff;stroke:#000000;stroke-width:1.00157"><tspan
          x="245.66992"
          y="320.53906"
-         id="tspan11">p</tspan></text><text
+         id="tspan14">p</tspan></text><text
        xml:space="preserve"
        style="font-size:3.175px;fill:#ffffff;stroke:#000000;stroke-width:0.264999"
        x="314.64465"
@@ -20029,4 +20029,22 @@
          id="tspan117"
          style="stroke-width:0.165;stroke:#000000;stroke-opacity:1;fill:#000000;fill-opacity:1"
          x="239.29085"
-         y="14.9165">ih (bit)</tspan></text></g></svg>
+         y="14.9165">ih (bit)</tspan></text><path
+       style="font-size:3.175px;fill-opacity:0.993214;stroke:#000000;stroke-width:0.365;stroke-dashoffset:0.113386"
+       d="m 576.47711,-263.35389 h 0.32711 v 0.26665 l -0.25424,0.4961 h -0.19999 l 0.12712,-0.4961 z"
+       id="text8"
+       aria-label=","
+       inkscape:label="logo=," /><path
+       style="font-size:3.175px;fill-opacity:0.993214;stroke:#000000;stroke-width:0.365;stroke-dashoffset:0.113386"
+       d="m 617.19468,-271.93561 -0.62787,0.84491 0.66042,0.89142 h -0.33641 l -0.5054,-0.68213 -0.50539,0.68213 h -0.33641 l 0.67437,-0.90847 -0.61701,-0.82786 h 0.33641 l 0.46044,0.61857 0.46043,-0.61857 z"
+       id="text12"
+       aria-label="x"
+       inkscape:label="logo=." /><path
+       d="m 591.46148,-287.67501 h 0.32711 v 0.39378 h -0.32711 z"
+       id="text13"
+       style="font-size:3.175px;fill-opacity:0;stroke:#000000;stroke-width:0.3;stroke-dashoffset:0.113386"
+       aria-label=".&#10;" /><path
+       id="path14"
+       style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.3;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
+       d="m 611.51819,-297.94427 0.057,0.62472 m -1.46313,-9.10447 c 2.32419,-2.20645 5.24024,0.92359 3.42096,3.29745 -2.38444,1.3125 -2.07782,3.65221 -2.07782,3.65221"
+       inkscape:label="logo=?" /></g></svg>
