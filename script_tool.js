@@ -5,7 +5,7 @@ var defaults = {
     "Custom_script_svg_value":  "",    
     "Builtin_script_name": "teen_script.svg",
     "Language_code": "en_US",
-    "Input_text": "Let's start a\nnew paragraph. Here's a bunch of random text. How does it look?",
+    "Input_text": "Let's start a\nnew paragraph.\nA real bagel has a ratio of inside dough to outside crust that is completely obliterated by those giant toroids now sold as bagels just about every place, including the U.S. ground zero of bagels. The right size bagel has about half the amount of inside dough as is found in those giant things and that dough is offset by the crisp outside, which gives texture that plays off against the dough.  Too much dough and what you’ve got is a mushy wad with no interest and less taste. Good luck finding this small gem anyplace in the U.S. although sometimes they are sold as “mini-bagels” ; the only place where the right size is standard are Montreal (!) and London (!!), but even there only in some bakeries. As with size, a real bagel has a texture that can be produced only by initial boiling. Anything else– no matter how delicious — is a toroid shaped roll. If you put a delicious tomato sauce and the world’s greatest mozzarella cheese on an English muffin, you may have a delicious thing to eat but you don’t have pizza. Likewise, a non-boiled roll is not a bagel. To call a boiled bagel “traditional” is accurate but dismissive; call it traditional and REAL. That’s accurate and correct.",
     "Space_between_metaforms": 5,
     "Space_between_lines": 10,
     "Margin": 5,
@@ -95,13 +95,12 @@ image_with_input_elements.forEach(function(elem) {
     });
 });
 
-number_image_width_input.value = 800;
-// Create a new 'change' event
+
+var viewportWidth = window.innerWidth - 20 ;
+range_image_width_input.value = viewportWidth;
 var event = new Event('input');
-// Dispatch it on the input element
 range_image_width_input.dispatchEvent(event);
 drawBackground("yellow");
-
 
 document.getElementById('Custom_script_svg_value').addEventListener('change', function(event) {
   var file = event.target.files[0];

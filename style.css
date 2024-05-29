@@ -44,31 +44,16 @@ textarea {
     border-radius: 4px;
     box-sizing: border-box;
 }
-@media only screen and (max-width: 48em) { /* Adjusts for screen sizes up to 768px if the default font size is 16px */
+
+@media only screen and (max-width: 48em) {
     .form-container {
 	flex-direction: column;
     }
     .left_form, .right_form {
-	flex-basis: auto; /* Reset width so they take full width on smaller screens */
+	flex-basis: auto;
     }
 }
 
-/* @media only screen and (min-width: 48.01em) and (max-width: 64em) { /\* Between 768px and 1024px *\/ */
-/*   /\* Tablet styles *\/ */
-/* } */
-
-/* @media only screen and (min-width: 64.01em) { /\* Above 1024px *\/ */
-/*   /\* Desktop styles *\/ */
-/* } */
-
-/* @media (max-width: 768px) { */
-/*     .form-container { */
-/* 	flex-direction: column; */
-/*     } */
-/*     .left_form, .right_form { */
-/* 	flex-basis: auto; /\* Reset width so they take full width on smaller screens *\/ */
-/*     } */
-/* } */
 .form-container input[type="number"],
 .form-container select {
   /* display: block; */
