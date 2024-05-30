@@ -27,11 +27,11 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#ffffff"
      inkscape:document-units="mm"
-     inkscape:zoom="4.6438308"
-     inkscape:cx="743.0288"
-     inkscape:cy="180.02379"
-     inkscape:window-width="1624"
-     inkscape:window-height="1666"
+     inkscape:zoom="1.1609577"
+     inkscape:cx="74.507452"
+     inkscape:cy="762.73235"
+     inkscape:window-width="2541"
+     inkscape:window-height="1929"
      inkscape:window-x="26"
      inkscape:window-y="23"
      inkscape:window-maximized="0"
@@ -87,12 +87,6 @@
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(-406.94128,340.71954)"><path
-       style="fill:#ffffff;fill-opacity:0;stroke:#000000;stroke-width:0.065;stroke-dasharray:none"
-       d="m 400.43687,-94.322401 c 0,0 0.59582,-0.17277 0.71256,2.23763 -0.0774,-2.65617 0.73272,-2.4829 0.73272,-2.4829"
-       id="path53-4-6-8"
-       sodipodi:nodetypes="ccc"
-       inkscape:label="IPA=aɪ"><title
-         id="title63">aɪ</title></path><path
        style="fill:#ffffff;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none"
        d="m 412.01011,-8.9763392 c 0,0 -0.17327,0.81013 2.4829,0.73272 -2.4104,0.11674 -2.23763,0.71256 -2.23763,0.71256"
        id="path53-4-6-8-6"
@@ -211,7 +205,7 @@
        style="white-space:pre;shape-inside:url(#rect11-6);display:inline;fill:#ffffff;stroke:#000000;stroke-width:1.00157"><tspan
          x="245.66992"
          y="320.53906"
-         id="tspan6">p</tspan></text><text
+         id="tspan1">p</tspan></text><text
        xml:space="preserve"
        style="font-size:3.175px;fill:#ffffff;stroke:#000000;stroke-width:0.264999"
        x="234.44296"
@@ -562,10 +556,10 @@
        transform="matrix(0.74366211,0,0,0.74366211,327.4118,-510.13068)"><tspan
          x="-165"
          y="80"
-         id="tspan7">Form meaning (Phoneme, syllable, syllable combination, </tspan><tspan
+         id="tspan2">Form meaning (Phoneme, syllable, syllable combination, </tspan><tspan
          x="-165"
          y="83.968753"
-         id="tspan8">prefix/suffix, punctuation or other markup</tspan></text><text
+         id="tspan3">prefix/suffix, punctuation or other markup</tspan></text><text
        xml:space="preserve"
        style="font-size:2.36113px;white-space:pre;inline-size:67.2936;display:inline;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0;stroke-dasharray:none"
        x="42.339478"
@@ -574,13 +568,13 @@
        transform="translate(240.4526,-506.05472)"><tspan
          x="42.339478"
          y="55.417015"
-         id="tspan9">Standardized IPA pronunciation: IMPORTANT: Copy and </tspan><tspan
+         id="tspan4">Standardized IPA pronunciation: IMPORTANT: Copy and </tspan><tspan
          x="42.339478"
          y="58.368427"
-         id="tspan12">paste this value into the ID for the form path in the next </tspan><tspan
+         id="tspan5">paste this value into the ID for the form path in the next </tspan><tspan
          x="42.339478"
          y="61.31984"
-         id="tspan13">column</tspan></text><text
+         id="tspan6">column</tspan></text><text
        xml:space="preserve"
        style="font-size:2.36113px;fill:#000000;stroke:#000000;stroke-width:0"
        x="382.20874"
@@ -1817,7 +1811,7 @@
        style="white-space:pre;shape-inside:url(#rect11-6-6);display:inline;fill:#ffffff;stroke:#000000;stroke-width:1.00157"><tspan
          x="245.66992"
          y="320.53906"
-         id="tspan14">p</tspan></text><text
+         id="tspan7">p</tspan></text><text
        xml:space="preserve"
        style="font-size:3.175px;fill:#ffffff;stroke:#000000;stroke-width:0.264999"
        x="314.64465"
@@ -20002,10 +19996,6 @@
        sodipodi:nodetypes="ccc"
        inkscape:label="IPA=ʊ" /><path
        style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.165;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
-       d="m 384.46508,-352.45235 13.86012,-0.21831"
-       id="path115"
-       inkscape:label="IPA=m&amp;logo=my" /><path
-       style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.165;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
        d="m 396.04121,15.032908 c 1.76312,0.987274 -1.98168,0.772287 0.66456,-0.16046"
        id="path116"
        sodipodi:nodetypes="cc"
@@ -20047,4 +20037,13 @@
        id="path14"
        style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.3;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
        d="m 611.51819,-297.94427 0.057,0.62472 m -1.46313,-9.10447 c 2.32419,-2.20645 5.24024,0.92359 3.42096,3.29745 -2.38444,1.3125 -2.07782,3.65221 -2.07782,3.65221"
-       inkscape:label="logo=?" /></g></svg>
+       inkscape:label="logo=?" /><path
+       style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.3;stroke-dashoffset:0.113386"
+       d="m 385.37705,-349.18036 12.68322,-0.42375"
+       id="path1"
+       inkscape:label="IPA=m&amp;logo=my" /><path
+       style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0.113386;stroke-opacity:1"
+       d="m 394.80048,-96.145732 c -0.39846,-0.16502 -1.24203,0.75599 -1.05797,4.03866 0.18406,-3.25733 -0.65951,-4.17834 -1.05797,-4.01332"
+       id="path2"
+       sodipodi:nodetypes="ccc"
+       inkscape:label="IPA=aɪ" /></g></svg>

@@ -258,12 +258,19 @@ func (m *Metaform) renderForm(o Options, log *log.Logger) *Metaform {
 				log.Println("Error parsing path: for ",m.Name, t.Name, err)
 			}
 			newPath = newPath.Translate(pos.X, pos.Y)
-			path = path.Append(newPath)
+			path = path.Join(newPath)
 			pos.X = path.Pos().X
 			pos.Y = path.Pos().Y
 		}
 	}
 
+	// for _, t := range m.Tokens {
+	// 	log.Println(t)
+	// }
+	// log.Println(m.Tokens)
+	// log.Print("Path for ", m.Name)
+	// log.Println(": ")
+	// log.Println(path)
 	ctx.DrawPath(0, 0, path)
 	bounding_box := path.Bounds()
 
@@ -318,6 +325,9 @@ func (m *Metaform) centerForm(new_height float64, o Options, face *canvas.FontFa
 	if o.Debug {
 
 		debug_text := m.Name + " (" + m.String() + ")"
+		if m.Name == "\n" {
+			debug_text = "¶"
+		}
 		ctx.DrawText(0, 10, canvas.NewTextBox(face, debug_text, form_width, 10, canvas.Left, canvas.Top, 0.0, 0.0))
 	}
 
