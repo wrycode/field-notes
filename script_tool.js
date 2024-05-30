@@ -122,7 +122,8 @@ document.getElementById('Custom_script_svg_value').addEventListener('change', fu
 document.getElementById("form-container").addEventListener('change', updateOptions);
 
 document.getElementById('renderButton').addEventListener('click', function() {
-	Render(JSON.stringify(options))
+    document.getElementById("log").value = ''; // clear debug log, which will get updated by the go code
+    Render(JSON.stringify(options))
 });
 
 var languages = [
