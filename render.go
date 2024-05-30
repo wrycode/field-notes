@@ -48,7 +48,7 @@ func LoadIPADict(lang string, log *log.Logger) (map[string]string, error) {
 	defer resp.Body.Close()
 
 
-	
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Println("Error reading IPA dictionary: " ,err)
@@ -196,7 +196,7 @@ func normalizePunctuation(input string) string {
 
    If the Token is defined in the current Script, Path contains a
    Canvas path, otherwise it is empty.
-*/ 
+*/
 
 type Token struct {
 	Name  string
@@ -280,16 +280,29 @@ func (m *Metaform) renderForm(o Options, log *log.Logger) *Metaform {
 	return m
 }
 
-// Redraw the form in m.Img into the center of a new image of the given height
-func (m *Metaform) centerForm(new_height float64, o Options) *Metaform {
+//go:embed font/*
+var fonts embed.FS
+
+// Redraw the form in m.Img into the center of a new image of the
+// given height, adding debugging information if specified
+func (m *Metaform) centerForm(new_height float64, o Options, face *canvas.FontFace) *Metaform {
 	// need to convert dimensions height to millimeters to
 	new_height =  new_height / canvas.DefaultResolution.DPMM()
 	form_height := float64(m.Img.Bounds().Dy()) / (canvas.DefaultResolution.DPMM())
 	form_width := float64(m.Img.Bounds().Dx()) / (canvas.DefaultResolution.DPMM()) // won't be changed
+
+	if o.Debug {
+		new_height += 10
+
+	}
 	c := canvas.New(form_width, new_height)
 
 	ctx := canvas.NewContext(c)
-	ctx.DrawImage(0,(new_height - form_height) / 2 , m.Img, canvas.DefaultResolution)
+	if o.Debug {
+		ctx.DrawImage(0,(new_height - form_height + 10) / 2 , m.Img, canvas.DefaultResolution)
+	} else {
+		ctx.DrawImage(0,(new_height - form_height) / 2 , m.Img, canvas.DefaultResolution)
+	}
 
 	var Transparent = color.RGBA{0x00, 0x00, 0x00, 0x00}
 
@@ -301,6 +314,15 @@ func (m *Metaform) centerForm(new_height float64, o Options) *Metaform {
 		border := canvas.Rect{0, 0,form_width, new_height }
 		ctx.DrawPath(0, 0, border.ToPath())
 	}
+
+	if o.Debug {
+
+		debug_text := m.Name + " (" + m.String() + ")"
+		ctx.DrawText(0, 10, canvas.NewTextBox(face, debug_text, form_width, 10, canvas.Left, canvas.Top, 0.0, 0.0))
+	}
+
+
+
 	m.Img = rasterizer.Draw(c, canvas.DefaultResolution, nil)
 	return m
 }
@@ -481,7 +503,7 @@ func Render(ctx *canvas.Context, options string, log *log.Logger) {
 
 	log.SetFlags(0)		// remove timestamp
 	// c := canvas.New(o.Image_width, o.Image_width)
-	
+
 	// handwriting system definition
 	var script *Script
 	if o.Custom_script_svg_value != "" {
@@ -502,8 +524,21 @@ func Render(ctx *canvas.Context, options string, log *log.Logger) {
 		log.Println(d)
 	}
 
-	// // Create a canvas context used to keep drawing state
-	// ctx := canvas.NewContext(c)
+	// Used to write text
+	var face *canvas.FontFace
+	if o.Debug {
+		fontNoto := canvas.NewFontFamily("noto")
+		font_file, err := fonts.ReadFile("font/NotoSans-Light.ttf")
+		if err != nil {
+			log.Println("Error reading builtin font: ", err)
+		}
+
+		if err := fontNoto.LoadFont(font_file, 0, canvas.FontRegular); err != nil {
+			panic(err)
+		}
+		face = fontNoto.Face(7.0, canvas.Black, canvas.FontBold, canvas.FontNormal)
+	}
+
 	width, height := ctx.Size()
 
 	// Render each Metaform into m.Img with variable size and width
@@ -540,7 +575,7 @@ func Render(ctx *canvas.Context, options string, log *log.Logger) {
 			max_height = math.Max(max_height, float64(m.Img.Bounds().Dy()))
 		}
 		for _, m := range line {
-			m.centerForm(max_height, o)
+			m.centerForm(max_height, o, face)
 		}
 	}
 
